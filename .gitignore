@@ -1,0 +1,29 @@
+# Project rules require these to stay out of git
+todo.md
+spec.md
+.claude/
+CLAUDE.md
+
+# Node / Expo
+node_modules/
+.expo/
+dist/
+web-build/
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Native build artifacts
+android/
+ios/
+*.apk
+*.aab
+
+# OS
+.DS_Store
