@@ -47,6 +47,11 @@ export default function StudentHome() {
       ) : (
         <Button label={t("studentHome.joinClass")} onPress={() => router.push("/(student)/join-class")} />
       )}
+      <Button
+        label={t("studentHome.studyByTag")}
+        variant="secondary"
+        onPress={() => router.push("/(student)/study")}
+      />
 
       <AppText variant="subheading">{t("studentHome.myRecordings")}</AppText>
       {recLoading ? (

@@ -11,7 +11,7 @@ import { Tag } from "../../../src/types/database";
 import { colors, spacing } from "../../../src/theme";
 
 export default function StudentRecordingView() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, at } = useLocalSearchParams<{ id: string; at?: string }>();
   const recordingId = id as string;
 
   const { data: recording, isLoading } = useRecording(recordingId);
@@ -20,7 +20,8 @@ export default function StudentRecordingView() {
   const { data: annotations } = useAnnotations(isReviewed ? recordingId : "");
 
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
-  const [seekToMs, setSeekToMs] = useState<number | null>(null);
+  // Optional deep-link from "study by tag" — jump to a specific moment on open.
+  const [seekToMs, setSeekToMs] = useState<number | null>(at ? Number(at) : null);
 
   // Unique tags used across this recording's annotations.
   const tagsInRecording = useMemo<Tag[]>(() => {
