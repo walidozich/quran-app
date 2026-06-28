@@ -11,7 +11,7 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { I18nManager } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { DevSessionProvider } from "../src/features/session/DevSessionProvider";
+import { AuthProvider } from "../src/features/session/auth";
 import { queryClient } from "../src/lib/queryClient";
 
 // Force right-to-left for the whole app, regardless of device locale.
@@ -40,12 +40,12 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <DevSessionProvider>
+      <AuthProvider>
         <SafeAreaProvider>
           <StatusBar style="dark" />
           <Stack screenOptions={{ headerShown: false }} />
         </SafeAreaProvider>
-      </DevSessionProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

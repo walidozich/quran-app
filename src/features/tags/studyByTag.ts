@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
+import { USE_LOCAL_BACKEND } from "../../config/backend";
 import { supabase } from "../../config/supabase";
 import { Annotation, Tag } from "../../types/database";
+import { localFetchStudentAnnotations } from "../local/localApi";
 
 export type StudyAnnotation = Annotation & {
   tags: Tag[];
@@ -12,6 +14,7 @@ export type StudyAnnotation = Annotation & {
  * and the parent recording label. Filtering by a specific tag is done client-side.
  */
 async function fetchStudentAnnotations(studentId: string): Promise<StudyAnnotation[]> {
+  if (USE_LOCAL_BACKEND) return localFetchStudentAnnotations(studentId);
   const { data, error } = await supabase
     .from("annotations")
     .select("*, tags(*), recording:recordings!inner(id, label, student_id, status)")

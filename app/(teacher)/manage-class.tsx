@@ -7,7 +7,7 @@ import {
   useCreateClass,
   useTeacherClasses,
 } from "../../src/features/classes/api";
-import { useSession } from "../../src/features/session/DevSessionProvider";
+import { useSession } from "../../src/features/session/auth";
 import { t } from "../../src/i18n/ar";
 import { ClassRow } from "../../src/types/database";
 import { colors, radius, spacing } from "../../src/theme";

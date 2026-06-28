@@ -1,10 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { USE_LOCAL_BACKEND } from "../../config/backend";
 import { supabase } from "../../config/supabase";
 import { Tag } from "../../types/database";
+import { localCreateTag, localFetchTags } from "../local/localApi";
 
 export const tagsQueryKey = ["tags"] as const;
 
 async function fetchTags(): Promise<Tag[]> {
+  if (USE_LOCAL_BACKEND) return localFetchTags();
   const { data, error } = await supabase
     .from("tags")
     .select("*")
@@ -23,6 +26,7 @@ export function useCreateTag(createdBy: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (name: string): Promise<Tag> => {
+      if (USE_LOCAL_BACKEND) return localCreateTag(name, createdBy);
       const trimmed = name.trim();
       const { data, error } = await supabase
         .from("tags")

@@ -11,7 +11,7 @@ import { View } from "react-native";
 import { AppText, Button, Card, Screen, TextField } from "../../src/components";
 import { useStudentClass } from "../../src/features/classes/api";
 import { useCreateRecording } from "../../src/features/recordings/api";
-import { useSession } from "../../src/features/session/DevSessionProvider";
+import { useSession } from "../../src/features/session/auth";
 import { t } from "../../src/i18n/ar";
 import { ensureRecordingReady, formatMillis, setPlaybackMode } from "../../src/lib/audio";
 import { colors, spacing } from "../../src/theme";

@@ -1,8 +1,9 @@
-import { File } from "expo-file-system";
+import { Directory, File, Paths } from "expo-file-system";
 import {
   requestRecordingPermissionsAsync,
   setAudioModeAsync,
 } from "expo-audio";
+import { USE_LOCAL_BACKEND } from "../config/backend";
 import { supabase } from "../config/supabase";
 
 /** Format milliseconds as mm:ss (LTR — used inside the LTR seek bar). */
@@ -36,6 +37,18 @@ export async function uploadAudio(
   path: string,
   contentType = "audio/m4a"
 ): Promise<string> {
+  if (USE_LOCAL_BACKEND) {
+    // Persist the file under the app's document directory and return its uri,
+    // which is stored directly as the recording/correction "path".
+    const dir = new Directory(Paths.document, bucket);
+    if (!dir.exists) dir.create({ intermediates: true });
+    const name = path.split("/").pop() as string;
+    const dest = new File(dir, name);
+    if (dest.exists) dest.delete();
+    await new File(localUri).copy(dest);
+    return dest.uri;
+  }
+
   const buffer = await new File(localUri).arrayBuffer();
   const { error } = await supabase.storage.from(bucket).upload(path, buffer, {
     contentType,

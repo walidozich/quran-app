@@ -1,8 +1,10 @@
 import { Redirect, Stack } from "expo-router";
-import { useSession } from "../../src/features/session/DevSessionProvider";
+import { useAuth } from "../../src/features/session/auth";
 
 export default function StudentLayout() {
-  const { role } = useSession();
-  if (role !== "student") return <Redirect href="/(teacher)" />;
+  const { loading, profile } = useAuth();
+  if (loading) return null;
+  if (!profile) return <Redirect href="/(auth)/sign-in" />;
+  if (profile.role !== "student") return <Redirect href="/(teacher)" />;
   return <Stack screenOptions={{ headerShown: false }} />;
 }

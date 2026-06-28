@@ -5,7 +5,7 @@ import { AppText, Card, Screen, TagChip } from "../../src/components";
 import { AnnotationCard } from "../../src/features/annotations/AnnotationCard";
 import { AnnotationWithTags } from "../../src/features/annotations/api";
 import { useStudentAnnotations } from "../../src/features/tags/studyByTag";
-import { useSession } from "../../src/features/session/DevSessionProvider";
+import { useSession } from "../../src/features/session/auth";
 import { t } from "../../src/i18n/ar";
 import { Tag } from "../../src/types/database";
 import { colors, spacing } from "../../src/theme";

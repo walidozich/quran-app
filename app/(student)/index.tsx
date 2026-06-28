@@ -5,8 +5,7 @@ import { BadgeStatus } from "../../src/components/Badge";
 import { useStudentClass } from "../../src/features/classes/api";
 import { useStudentRecordings } from "../../src/features/recordings/api";
 import { buildThreads } from "../../src/features/recordings/threads";
-import { useSession } from "../../src/features/session/DevSessionProvider";
-import { RoleSwitcher } from "../../src/features/session/RoleSwitcher";
+import { useAuth, useSession } from "../../src/features/session/auth";
 import { t } from "../../src/i18n/ar";
 import { RecordingStatus } from "../../src/types/database";
 import { colors, spacing } from "../../src/theme";
@@ -20,6 +19,7 @@ function studentBadge(status: RecordingStatus): { status: BadgeStatus; label: st
 export default function StudentHome() {
   const router = useRouter();
   const { currentProfile } = useSession();
+  const { signOut } = useAuth();
   const { data: studentClass, isLoading: classLoading } = useStudentClass(currentProfile.id);
   const { data: recordings, isLoading: recLoading } = useStudentRecordings(currentProfile.id);
 
@@ -78,10 +78,12 @@ export default function StudentHome() {
         <AppText color={colors.textMuted}>{t("studentHome.noRecordings")}</AppText>
       )}
 
-      <Card style={{ marginTop: spacing.md }}>
-        <AppText variant="heading">{t("dev.title")}</AppText>
-        <RoleSwitcher />
-      </Card>
+      <Button
+        label={t("auth.signOut")}
+        variant="ghost"
+        onPress={signOut}
+        style={{ marginTop: spacing.md }}
+      />
     </Screen>
   );
 }

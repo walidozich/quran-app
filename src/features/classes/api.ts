@@ -1,7 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { USE_LOCAL_BACKEND } from "../../config/backend";
 import { supabase } from "../../config/supabase";
 import { ClassRow } from "../../types/database";
-import { genJoinCode } from "./joinCode";
+import {
+  localCreateClass,
+  localFetchClassMembers,
+  localFetchStudentClass,
+  localFetchTeacherClasses,
+  localJoinClass,
+} from "../local/localApi";
+import { genJoinCode, JoinClassError } from "./joinCode";
+
+export { JoinClassError } from "./joinCode";
 
 export type ClassMemberWithProfile = {
   id: string;
@@ -19,6 +29,7 @@ export const classKeys = {
 };
 
 async function fetchTeacherClasses(teacherId: string): Promise<ClassRow[]> {
+  if (USE_LOCAL_BACKEND) return localFetchTeacherClasses(teacherId);
   const { data, error } = await supabase
     .from("classes")
     .select("*")
@@ -36,6 +47,7 @@ export function useTeacherClasses(teacherId: string) {
 }
 
 async function fetchClassMembers(classId: string): Promise<ClassMemberWithProfile[]> {
+  if (USE_LOCAL_BACKEND) return localFetchClassMembers(classId);
   const { data, error } = await supabase
     .from("class_members")
     .select("id, joined_at, student:profiles(id, full_name)")
@@ -55,6 +67,7 @@ export function useClassMembers(classId: string | undefined) {
 }
 
 async function fetchStudentClass(studentId: string): Promise<ClassRow | null> {
+  if (USE_LOCAL_BACKEND) return localFetchStudentClass(studentId);
   const { data, error } = await supabase
     .from("class_members")
     .select("class:classes(*)")
@@ -80,6 +93,7 @@ export function useCreateClass(teacherId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (name: string): Promise<ClassRow> => {
+      if (USE_LOCAL_BACKEND) return localCreateClass(teacherId, name);
       const { data, error } = await supabase
         .from("classes")
         .insert({ teacher_id: teacherId, name, join_code: genJoinCode() })
@@ -94,12 +108,11 @@ export function useCreateClass(teacherId: string) {
   });
 }
 
-export class JoinClassError extends Error {}
-
 export function useJoinClass(studentId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (rawCode: string): Promise<ClassRow> => {
+      if (USE_LOCAL_BACKEND) return localJoinClass(studentId, rawCode);
       const code = rawCode.trim().toUpperCase();
       const { data: cls, error: findErr } = await supabase
         .from("classes")

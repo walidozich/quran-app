@@ -5,7 +5,7 @@ import { BadgeStatus } from "../../../src/components/Badge";
 import { useStudentRecordings } from "../../../src/features/recordings/api";
 import { RecordingReviewPanel } from "../../../src/features/recordings/RecordingReviewPanel";
 import { buildThreads } from "../../../src/features/recordings/threads";
-import { useSession } from "../../../src/features/session/DevSessionProvider";
+import { useSession } from "../../../src/features/session/auth";
 import { t } from "../../../src/i18n/ar";
 import { RecordingStatus } from "../../../src/types/database";
 import { colors, spacing } from "../../../src/theme";

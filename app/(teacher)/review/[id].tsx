@@ -17,7 +17,7 @@ import {
   useSetRecordingStatus,
   useSignedAudioUrl,
 } from "../../../src/features/recordings/api";
-import { useSession } from "../../../src/features/session/DevSessionProvider";
+import { useSession } from "../../../src/features/session/auth";
 import { useCreateTag, useTags } from "../../../src/features/tags/useTags";
 import { t } from "../../../src/i18n/ar";
 import { colors, spacing } from "../../../src/theme";

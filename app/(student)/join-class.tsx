@@ -2,7 +2,7 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { AppText, Button, Card, Screen, TextField } from "../../src/components";
 import { JoinClassError, useJoinClass } from "../../src/features/classes/api";
-import { useSession } from "../../src/features/session/DevSessionProvider";
+import { useSession } from "../../src/features/session/auth";
 import { t } from "../../src/i18n/ar";
 import { colors } from "../../src/theme";
 

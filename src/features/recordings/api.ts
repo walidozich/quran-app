@@ -1,7 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { USE_LOCAL_BACKEND } from "../../config/backend";
 import { supabase } from "../../config/supabase";
 import { uploadAudio } from "../../lib/audio";
 import { Recording, RecordingStatus } from "../../types/database";
+import {
+  localFetchRecordingById,
+  localFetchStudentRecordings,
+  localFetchTeacherRecordings,
+  localInsertRecording,
+  localSetRecordingStatus,
+} from "../local/localApi";
 
 export type RecordingWithStudent = Recording & { student: { full_name: string } };
 
@@ -13,6 +21,7 @@ export const recordingKeys = {
 };
 
 async function fetchStudentRecordings(studentId: string): Promise<Recording[]> {
+  if (USE_LOCAL_BACKEND) return localFetchStudentRecordings(studentId);
   const { data, error } = await supabase
     .from("recordings")
     .select("*")
@@ -30,6 +39,7 @@ export function useStudentRecordings(studentId: string) {
 }
 
 async function fetchRecordingById(id: string): Promise<Recording | null> {
+  if (USE_LOCAL_BACKEND) return localFetchRecordingById(id);
   const { data, error } = await supabase.from("recordings").select("*").eq("id", id).maybeSingle();
   if (error) throw error;
   return data;
@@ -43,6 +53,7 @@ export function useRecording(id: string) {
 }
 
 async function fetchTeacherRecordings(teacherId: string): Promise<RecordingWithStudent[]> {
+  if (USE_LOCAL_BACKEND) return localFetchTeacherRecordings(teacherId);
   const { data: classes, error: clsErr } = await supabase
     .from("classes")
     .select("id")
@@ -69,6 +80,8 @@ export function useTeacherRecordings(teacherId: string) {
 }
 
 async function fetchSignedAudioUrl(path: string): Promise<string> {
+  // Local backend stores a file:// uri directly as the path.
+  if (USE_LOCAL_BACKEND) return path;
   const { data, error } = await supabase.storage.from("recordings").createSignedUrl(path, 3600);
   if (error) throw error;
   return data.signedUrl;
@@ -96,6 +109,7 @@ export function useSetRecordingStatus() {
       status: RecordingStatus;
       reviewedAt?: string | null;
     }): Promise<void> => {
+      if (USE_LOCAL_BACKEND) return localSetRecordingStatus(id, status, reviewedAt);
       const patch: { status: RecordingStatus; reviewed_at?: string | null } = { status };
       if (reviewedAt !== undefined) patch.reviewed_at = reviewedAt;
       const { error } = await supabase.from("recordings").update(patch).eq("id", id);
@@ -121,7 +135,18 @@ export function useCreateRecording(studentId: string) {
   return useMutation({
     mutationFn: async (input: NewRecordingInput): Promise<Recording> => {
       const path = `${studentId}/${Date.now()}.m4a`;
-      await uploadAudio(input.localUri, "recordings", path);
+      const storedPath = await uploadAudio(input.localUri, "recordings", path);
+
+      if (USE_LOCAL_BACKEND) {
+        return localInsertRecording({
+          classId: input.classId,
+          studentId,
+          label: input.label,
+          audioPath: storedPath,
+          durationMs: input.durationMs,
+          respondsToId: input.respondsToId ?? null,
+        });
+      }
 
       const { data, error } = await supabase
         .from("recordings")
@@ -129,7 +154,7 @@ export function useCreateRecording(studentId: string) {
           class_id: input.classId,
           student_id: studentId,
           label: input.label,
-          audio_path: path,
+          audio_path: storedPath,
           duration_ms: Math.round(input.durationMs),
           responds_to_id: input.respondsToId ?? null,
           status: "pending",
