@@ -1,8 +1,10 @@
 import { useIsFetching, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
+import { useMemo } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
+import { useDrawer } from "../features/drawer/Drawer";
 import { t } from "../i18n/ar";
-import { colors, radius, spacing } from "../theme";
+import { ColorScheme, radius, spacing, useColors } from "../theme";
 import { AppText } from "./AppText";
 
 type Props = {
@@ -10,29 +12,45 @@ type Props = {
   subtitle?: string;
   /** Show a back arrow (RTL → points right). Defaults to true when navigation can go back. */
   back?: boolean;
+  /** Show a menu (hamburger) that opens the drawer — use on root screens. */
+  menu?: boolean;
   /** Hide the reload button on screens where it isn't useful. */
   reload?: boolean;
 };
 
 /**
- * App bar: optional back arrow + title + manual reload, closed by a thin gold
- * "illumination" rule (a nod to mushaf section borders) — the app's signature.
+ * App bar: a leading control (menu on roots, back elsewhere) + title + manual
+ * reload, closed by a thin gold "illumination" rule — the app's signature.
  */
-export function ScreenHeader({ title, subtitle, back, reload = true }: Props) {
+export function ScreenHeader({ title, subtitle, back, menu, reload = true }: Props) {
   const router = useRouter();
+  const drawer = useDrawer();
   const qc = useQueryClient();
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const fetching = useIsFetching() > 0;
-  const showBack = back ?? router.canGoBack();
+  const showBack = !menu && (back ?? router.canGoBack());
 
   const goBack = () => {
-    // Guard: only dispatch GO_BACK when there's actually a screen to return to.
     if (router.canGoBack()) router.back();
   };
 
   return (
     <View style={styles.wrap}>
       <View style={styles.row}>
-        {showBack ? (
+        {menu ? (
+          <Pressable
+            onPress={drawer.open}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel={t("drawer.menu")}
+            style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
+          >
+            <AppText variant="heading" color={colors.primary}>
+              ☰
+            </AppText>
+          </Pressable>
+        ) : showBack ? (
           <Pressable
             onPress={goBack}
             hitSlop={10}
@@ -86,54 +104,55 @@ export function ScreenHeader({ title, subtitle, back, reload = true }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: {
-    gap: spacing.sm,
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: spacing.sm,
-  },
-  titleCol: {
-    flex: 1,
-    gap: spacing.xs,
-    paddingTop: spacing.xs,
-  },
-  iconBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.pill,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.primarySoft,
-  },
-  reloadBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.pill,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  pressed: {
-    opacity: 0.6,
-  },
-  ruleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-  },
-  rule: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.accentMuted,
-  },
-  diamond: {
-    width: 7,
-    height: 7,
-    backgroundColor: colors.accent,
-    transform: [{ rotate: "45deg" }],
-  },
-});
+const makeStyles = (colors: ColorScheme) =>
+  StyleSheet.create({
+    wrap: {
+      gap: spacing.sm,
+    },
+    row: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: spacing.sm,
+    },
+    titleCol: {
+      flex: 1,
+      gap: spacing.xs,
+      paddingTop: spacing.xs,
+    },
+    iconBtn: {
+      width: 40,
+      height: 40,
+      borderRadius: radius.pill,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.primarySoft,
+    },
+    reloadBtn: {
+      width: 40,
+      height: 40,
+      borderRadius: radius.pill,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    pressed: {
+      opacity: 0.6,
+    },
+    ruleRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.sm,
+    },
+    rule: {
+      flex: 1,
+      height: 1,
+      backgroundColor: colors.accentMuted,
+    },
+    diamond: {
+      width: 7,
+      height: 7,
+      backgroundColor: colors.accent,
+      transform: [{ rotate: "45deg" }],
+    },
+  });

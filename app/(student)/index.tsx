@@ -2,21 +2,37 @@ import { useRouter } from "expo-router";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { AppText, Button, Card, Screen, ScreenHeader } from "../../src/components";
 import { useStudentClasses } from "../../src/features/classes/api";
-import { useAuth, useSession } from "../../src/features/session/auth";
+import { useSession } from "../../src/features/session/auth";
 import { t } from "../../src/i18n/ar";
-import { colors, spacing } from "../../src/theme";
+import { useColors } from "../../src/theme";
 
 export default function StudentHome() {
   const router = useRouter();
+  const colors = useColors();
   const { currentProfile } = useSession();
-  const { signOut } = useAuth();
   const { data: classes, isLoading } = useStudentClasses(currentProfile.id);
 
   const hasClasses = (classes?.length ?? 0) > 0;
 
   return (
     <Screen scroll>
-      <ScreenHeader title={t("studentHome.title")} subtitle={currentProfile.full_name} back={false} />
+      <ScreenHeader title={t("studentHome.title")} subtitle={currentProfile.full_name} menu />
+
+      <Button
+        label={hasClasses ? t("studentHome.joinAnother") : t("studentHome.joinClass")}
+        variant={hasClasses ? "secondary" : "primary"}
+        onPress={() => router.push("/(student)/join-class")}
+      />
+      <Button
+        label={t("studentHome.studyByTag")}
+        variant="secondary"
+        onPress={() => router.push("/(student)/study")}
+      />
+      <Button
+        label={t("dashboard.open")}
+        variant="secondary"
+        onPress={() => router.push("/(student)/dashboard")}
+      />
 
       <AppText variant="subheading">{t("studentHome.myClasses")}</AppText>
       {isLoading ? (
@@ -42,29 +58,6 @@ export default function StudentHome() {
           <AppText color={colors.textMuted}>{t("studentHome.noClass")}</AppText>
         </Card>
       )}
-
-      <Button
-        label={hasClasses ? t("studentHome.joinAnother") : t("studentHome.joinClass")}
-        variant={hasClasses ? "secondary" : "primary"}
-        onPress={() => router.push("/(student)/join-class")}
-      />
-      <Button
-        label={t("studentHome.studyByTag")}
-        variant="secondary"
-        onPress={() => router.push("/(student)/study")}
-      />
-      <Button
-        label={t("dashboard.open")}
-        variant="secondary"
-        onPress={() => router.push("/(student)/dashboard")}
-      />
-
-      <Button
-        label={t("auth.signOut")}
-        variant="ghost"
-        onPress={signOut}
-        style={{ marginTop: spacing.md }}
-      />
     </Screen>
   );
 }

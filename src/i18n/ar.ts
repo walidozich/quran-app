@@ -125,6 +125,12 @@ export const ar = {
     noMistakes: "لا توجد أخطاء موسومة بعد",
     total: "الإجمالي",
   },
+  drawer: {
+    menu: "القائمة",
+    account: "الحساب",
+    settings: "الإعدادات",
+    darkMode: "الوضع الليلي",
+  },
   teacherClass: {
     allStudents: "كل الطلاب",
     filterByStudent: "تصفية حسب الطالب",

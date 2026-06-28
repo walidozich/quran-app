@@ -192,6 +192,10 @@ Visual identity drawn from the *mushaf* (illuminated manuscript): **deep emerald
 
 **Logo:** the app renders `assets/logo.svg` as a component (via `react-native-svg-transformer`). A placeholder rub-el-hizb is committed; replace `assets/logo.svg` with your own (same path + name) and restart Metro with cache clear (`./dev.sh --lan -c`). For the native app icon, replace `assets/icon.png` (1024×1024 PNG).
 
+**Light / dark theme:** two palettes (`src/theme/colors.ts`) provided via `ThemeProvider`; components read the active palette through the `useColors()` hook (never the static `colors` import). The mode persists in AsyncStorage and is toggled from the drawer. The status bar follows the theme.
+
+**Drawer & navigation:** every home screen has a menu button (top-start) opening a side **drawer** (`src/features/drawer/Drawer.tsx`) with the account, settings (dark-mode switch), and **logout**. Both role homes share one layout: actions first, then the class list. Detail screens carry a back arrow.
+
 ## Recording review lifecycle
 ```mermaid
 stateDiagram-v2

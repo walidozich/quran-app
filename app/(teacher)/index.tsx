@@ -2,21 +2,21 @@ import { useRouter } from "expo-router";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { AppText, Button, Card, Screen, ScreenHeader } from "../../src/components";
 import { useTeacherClasses } from "../../src/features/classes/api";
-import { useAuth, useSession } from "../../src/features/session/auth";
+import { useSession } from "../../src/features/session/auth";
 import { t } from "../../src/i18n/ar";
-import { colors, spacing } from "../../src/theme";
+import { useColors } from "../../src/theme";
 
 export default function TeacherHome() {
   const router = useRouter();
+  const colors = useColors();
   const { currentProfile } = useSession();
-  const { signOut } = useAuth();
   const { data: classes, isLoading } = useTeacherClasses(currentProfile.id);
 
   const hasClasses = (classes?.length ?? 0) > 0;
 
   return (
     <Screen scroll>
-      <ScreenHeader title={t("teacherHome.title")} subtitle={currentProfile.full_name} back={false} />
+      <ScreenHeader title={t("teacherHome.title")} subtitle={currentProfile.full_name} menu />
 
       <Button label={t("teacherHome.manageClass")} onPress={() => router.push("/(teacher)/manage-class")} />
       <Button
@@ -49,13 +49,6 @@ export default function TeacherHome() {
           <AppText color={colors.textMuted}>{t("classes.noClasses")}</AppText>
         </Card>
       )}
-
-      <Button
-        label={t("auth.signOut")}
-        variant="ghost"
-        onPress={signOut}
-        style={{ marginTop: spacing.md }}
-      />
     </Screen>
   );
 }
