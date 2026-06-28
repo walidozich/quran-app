@@ -15,9 +15,10 @@ import { useSession } from "../../src/features/session/auth";
 import { statusCounts, tagFrequency } from "../../src/features/stats/aggregate";
 import { useStudentAnnotations } from "../../src/features/tags/studyByTag";
 import { t } from "../../src/i18n/ar";
-import { colors, spacing } from "../../src/theme";
+import { spacing, useColors } from "../../src/theme";
 
 export default function StudentDashboard() {
+  const colors = useColors();
   const { currentProfile } = useSession();
   const { data: recordings, isLoading: recLoading } = useStudentRecordings(currentProfile.id);
   const { data: classes } = useStudentClasses(currentProfile.id);

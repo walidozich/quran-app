@@ -8,7 +8,7 @@ import { buildThreads } from "../../../src/features/recordings/threads";
 import { useSession } from "../../../src/features/session/auth";
 import { t } from "../../../src/i18n/ar";
 import { RecordingStatus } from "../../../src/types/database";
-import { colors } from "../../../src/theme";
+import { useColors } from "../../../src/theme";
 
 function studentBadge(status: RecordingStatus): { status: BadgeStatus; label: string } {
   if (status === "reviewed") return { status: "reviewed", label: t("status.reviewed") };
@@ -18,6 +18,7 @@ function studentBadge(status: RecordingStatus): { status: BadgeStatus; label: st
 export default function StudentClass() {
   const router = useRouter();
   const { classId } = useLocalSearchParams<{ classId: string }>();
+  const colors = useColors();
   const { currentProfile } = useSession();
   const { data: classes } = useStudentClasses(currentProfile.id);
   const { data: recordings, isLoading } = useStudentRecordings(currentProfile.id);

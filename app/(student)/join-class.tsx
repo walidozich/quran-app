@@ -4,10 +4,11 @@ import { AppText, Button, Card, Screen, ScreenHeader, TextField } from "../../sr
 import { JoinClassError, useJoinClass } from "../../src/features/classes/api";
 import { useSession } from "../../src/features/session/auth";
 import { t } from "../../src/i18n/ar";
-import { colors } from "../../src/theme";
+import { useColors } from "../../src/theme";
 
 export default function JoinClass() {
   const router = useRouter();
+  const colors = useColors();
   const { currentProfile } = useSession();
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);

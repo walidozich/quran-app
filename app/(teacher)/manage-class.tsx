@@ -10,9 +10,10 @@ import {
 import { useSession } from "../../src/features/session/auth";
 import { t } from "../../src/i18n/ar";
 import { ClassRow } from "../../src/types/database";
-import { colors, radius, spacing } from "../../src/theme";
+import { radius, spacing, useColors } from "../../src/theme";
 
 function ClassCard({ cls }: { cls: ClassRow }) {
+  const colors = useColors();
   const { data: members, isLoading } = useClassMembers(cls.id);
   return (
     <Card>
@@ -53,6 +54,7 @@ function ClassCard({ cls }: { cls: ClassRow }) {
 }
 
 export default function ManageClass() {
+  const colors = useColors();
   const { currentProfile } = useSession();
   const [name, setName] = useState("");
   const createClass = useCreateClass(currentProfile.id);

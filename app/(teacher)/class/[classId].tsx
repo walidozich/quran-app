@@ -9,7 +9,7 @@ import { buildThreads, Thread } from "../../../src/features/recordings/threads";
 import { useSession } from "../../../src/features/session/auth";
 import { t } from "../../../src/i18n/ar";
 import { RecordingStatus } from "../../../src/types/database";
-import { colors, radius, spacing } from "../../../src/theme";
+import { ColorScheme, radius, spacing, useColors } from "../../../src/theme";
 
 function teacherBadge(status: RecordingStatus): { status: BadgeStatus; label: string } {
   if (status === "reviewed") return { status: "reviewed", label: t("status.reviewed") };
@@ -21,6 +21,8 @@ type StudentGroup = { id: string; name: string; threads: Thread<RecordingWithStu
 
 export default function TeacherClass() {
   const router = useRouter();
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const { classId } = useLocalSearchParams<{ classId: string }>();
   const { currentProfile } = useSession();
   const { data: classes } = useTeacherClasses(currentProfile.id);
@@ -101,6 +103,8 @@ export default function TeacherClass() {
 }
 
 function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <Pressable onPress={onPress} style={[styles.chip, active ? styles.chipActive : styles.chipIdle]}>
       <AppText variant="caption" color={active ? colors.textOnPrimary : colors.primary}>
@@ -110,7 +114,8 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ColorScheme) =>
+  StyleSheet.create({
   chips: {
     flexDirection: "row",
     flexWrap: "wrap",

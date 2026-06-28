@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, View } from "react-native";
-import { colors, radius, spacing } from "../theme";
+import { radius, spacing, useColors } from "../theme";
 import { AppText } from "./AppText";
 
 type Props = {
@@ -9,20 +9,18 @@ type Props = {
   onPress?: () => void;
 };
 
-export function TagChip({ label, color = colors.primary, selected = false, onPress }: Props) {
+export function TagChip({ label, color, selected = false, onPress }: Props) {
+  const colors = useColors();
+  const tint = color ?? colors.primary;
   const body = (
     <View
       style={[
         styles.chip,
-        { borderColor: color },
-        selected ? { backgroundColor: color } : { backgroundColor: color + "14" },
+        { borderColor: tint },
+        selected ? { backgroundColor: tint } : { backgroundColor: tint + "14" },
       ]}
     >
-      <AppText
-        variant="caption"
-        color={selected ? colors.textOnPrimary : color}
-        style={styles.text}
-      >
+      <AppText variant="caption" color={selected ? colors.textOnPrimary : tint} style={styles.text}>
         {label}
       </AppText>
     </View>

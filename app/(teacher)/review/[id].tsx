@@ -20,11 +20,12 @@ import {
 import { useSession } from "../../../src/features/session/auth";
 import { useCreateTag, useTags } from "../../../src/features/tags/useTags";
 import { t } from "../../../src/i18n/ar";
-import { colors, spacing } from "../../../src/theme";
+import { spacing, useColors } from "../../../src/theme";
 
 export default function ReviewScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const recordingId = id as string;
+  const colors = useColors();
   const { currentProfile } = useSession();
 
   const { data: recording, isLoading: recLoading } = useRecording(recordingId);

@@ -1,14 +1,14 @@
 import { StyleSheet, View } from "react-native";
-import { colors, radius, spacing } from "../theme";
+import { ColorScheme, radius, spacing, useColors } from "../theme";
 import { AppText } from "./AppText";
 
 export type BadgeStatus = "pending" | "draft" | "reviewed";
 
-const statusColor: Record<BadgeStatus, string> = {
-  pending: colors.statusPending,
-  draft: colors.statusDraft,
-  reviewed: colors.statusReviewed,
-};
+function statusColor(colors: ColorScheme, status: BadgeStatus): string {
+  if (status === "reviewed") return colors.statusReviewed;
+  if (status === "draft") return colors.statusDraft;
+  return colors.statusPending;
+}
 
 type Props = {
   label: string;
@@ -16,7 +16,8 @@ type Props = {
 };
 
 export function Badge({ label, status = "pending" }: Props) {
-  const tint = statusColor[status];
+  const colors = useColors();
+  const tint = statusColor(colors, status);
   return (
     <View style={[styles.badge, { backgroundColor: tint + "1A", borderColor: tint }]}>
       <AppText variant="caption" color={tint} style={styles.text}>

@@ -15,9 +15,10 @@ import { useTeacherRecordings } from "../../src/features/recordings/api";
 import { useSession } from "../../src/features/session/auth";
 import { statusCounts, tagFrequency } from "../../src/features/stats/aggregate";
 import { t } from "../../src/i18n/ar";
-import { colors, spacing } from "../../src/theme";
+import { spacing, useColors } from "../../src/theme";
 
 export default function TeacherDashboard() {
+  const colors = useColors();
   const { currentProfile } = useSession();
   const { data: recordings, isLoading: recLoading } = useTeacherRecordings(currentProfile.id);
   const { data: classes } = useTeacherClasses(currentProfile.id);

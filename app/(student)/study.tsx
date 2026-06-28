@@ -8,10 +8,11 @@ import { useStudentAnnotations } from "../../src/features/tags/studyByTag";
 import { useSession } from "../../src/features/session/auth";
 import { t } from "../../src/i18n/ar";
 import { Tag } from "../../src/types/database";
-import { colors, spacing } from "../../src/theme";
+import { spacing, useColors } from "../../src/theme";
 
 export default function StudyByTag() {
   const router = useRouter();
+  const colors = useColors();
   const { currentProfile } = useSession();
   const { data: results, isLoading } = useStudentAnnotations(currentProfile.id);
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null);

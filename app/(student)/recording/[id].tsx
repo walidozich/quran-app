@@ -4,10 +4,11 @@ import { AppText, Button, Screen } from "../../../src/components";
 import { useRecording } from "../../../src/features/recordings/api";
 import { RecordingReviewPanel } from "../../../src/features/recordings/RecordingReviewPanel";
 import { t } from "../../../src/i18n/ar";
-import { colors, spacing } from "../../../src/theme";
+import { spacing, useColors } from "../../../src/theme";
 
 export default function StudentRecordingView() {
   const router = useRouter();
+  const colors = useColors();
   const { id, at } = useLocalSearchParams<{ id: string; at?: string }>();
   const recordingId = id as string;
   const { data: recording, isLoading } = useRecording(recordingId);

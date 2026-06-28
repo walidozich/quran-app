@@ -3,7 +3,7 @@ import { ActivityIndicator, View } from "react-native";
 import { AppText, Card, Player, TagChip } from "../../components";
 import { PlayerMarker } from "../../components/Player";
 import { t } from "../../i18n/ar";
-import { colors, spacing } from "../../theme";
+import { spacing, useColors } from "../../theme";
 import { Tag } from "../../types/database";
 import { AnnotationCard } from "../annotations/AnnotationCard";
 import { useAnnotations } from "../annotations/api";
@@ -16,6 +16,7 @@ type Props = {
 
 /** Read-only student view of one recording: player + markers + filtered annotation list. */
 export function RecordingReviewPanel({ recordingId, initialSeekMs = null }: Props) {
+  const colors = useColors();
   const { data: recording, isLoading } = useRecording(recordingId);
   const { data: audioUrl } = useSignedAudioUrl(recording?.audio_path);
   const isReviewed = recording?.status === "reviewed";

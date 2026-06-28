@@ -10,7 +10,7 @@ import { Modal, ScrollView, StyleSheet, View } from "react-native";
 import { AppText, Button, Card, TagChip, TextField } from "../../components";
 import { t } from "../../i18n/ar";
 import { ensureRecordingReady, formatMillis, setPlaybackMode } from "../../lib/audio";
-import { colors, spacing } from "../../theme";
+import { ColorScheme, spacing, useColors } from "../../theme";
 import { Tag } from "../../types/database";
 
 type Props = {
@@ -47,6 +47,8 @@ export function AnnotationEditor({
   onSubmitCreate,
   onSubmitEdit,
 }: Props) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [comment, setComment] = useState("");
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [newTag, setNewTag] = useState("");
@@ -225,7 +227,8 @@ export function AnnotationEditor({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ColorScheme) =>
+  StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.35)",

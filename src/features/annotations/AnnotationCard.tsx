@@ -4,7 +4,7 @@ import { Pressable, View } from "react-native";
 import { AppText, Button, Card, TagChip } from "../../components";
 import { t } from "../../i18n/ar";
 import { formatMillis } from "../../lib/audio";
-import { colors, spacing } from "../../theme";
+import { spacing, useColors } from "../../theme";
 import { AnnotationWithTags, useCorrectionUrl } from "./api";
 
 function VoiceCorrectionButton({ path }: { path: string }) {
@@ -41,6 +41,7 @@ type Props = {
 };
 
 export function AnnotationCard({ annotation, onJump, editable, onEdit, onDelete }: Props) {
+  const colors = useColors();
   return (
     <Card>
       <Pressable onPress={() => onJump?.(annotation.timestamp_ms)}>

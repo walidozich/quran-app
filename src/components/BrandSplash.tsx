@@ -1,9 +1,9 @@
 import { LinearGradient } from "expo-linear-gradient";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Animated, Easing, StyleSheet, View } from "react-native";
 import Logo from "../../assets/logo.svg";
 import { t } from "../i18n/ar";
-import { colors, spacing } from "../theme";
+import { ColorScheme, spacing, useColors } from "../theme";
 import { AppText } from "./AppText";
 
 const MIN_DURATION = 1200;
@@ -16,6 +16,8 @@ type Props = {
 
 /** Branded launch screen: emerald gradient, the logo, app name + tagline. */
 export function BrandSplash({ ready, onFinish }: Props) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const enter = useRef(new Animated.Value(0)).current; // logo fade + rise
   const fade = useRef(new Animated.Value(1)).current; // whole-screen fade-out
   const mountedAt = useRef(Date.now()).current;
@@ -72,7 +74,8 @@ export function BrandSplash({ ready, onFinish }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ColorScheme) =>
+  StyleSheet.create({
   fill: {
     flex: 1,
     alignItems: "center",

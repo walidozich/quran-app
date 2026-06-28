@@ -1,12 +1,15 @@
 import { LinearGradient } from "expo-linear-gradient";
+import { useMemo } from "react";
 import { StyleSheet, View } from "react-native";
 import Logo from "../../assets/logo.svg";
 import { t } from "../i18n/ar";
-import { colors, radius, spacing } from "../theme";
+import { ColorScheme, radius, spacing, useColors } from "../theme";
 import { AppText } from "./AppText";
 
 /** Emerald gradient banner with the logo + app name — the auth screens' hero. */
 export function AuthHero({ subtitle }: { subtitle: string }) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <LinearGradient
       colors={[colors.primary, colors.primaryDeep]}
@@ -30,34 +33,35 @@ export function AuthHero({ subtitle }: { subtitle: string }) {
   );
 }
 
-const styles = StyleSheet.create({
-  hero: {
-    borderRadius: radius.lg,
-    paddingVertical: spacing.xl,
-    paddingHorizontal: spacing.lg,
-    alignItems: "center",
-    gap: spacing.sm,
-  },
-  center: {
-    textAlign: "center",
-  },
-  ruleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-    width: 140,
-    marginVertical: spacing.xs,
-  },
-  rule: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.accent,
-    opacity: 0.55,
-  },
-  diamond: {
-    width: 7,
-    height: 7,
-    backgroundColor: colors.accent,
-    transform: [{ rotate: "45deg" }],
-  },
-});
+const makeStyles = (colors: ColorScheme) =>
+  StyleSheet.create({
+    hero: {
+      borderRadius: radius.lg,
+      paddingVertical: spacing.xl,
+      paddingHorizontal: spacing.lg,
+      alignItems: "center",
+      gap: spacing.sm,
+    },
+    center: {
+      textAlign: "center",
+    },
+    ruleRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.sm,
+      width: 140,
+      marginVertical: spacing.xs,
+    },
+    rule: {
+      flex: 1,
+      height: 1,
+      backgroundColor: colors.accent,
+      opacity: 0.55,
+    },
+    diamond: {
+      width: 7,
+      height: 7,
+      backgroundColor: colors.accent,
+      transform: [{ rotate: "45deg" }],
+    },
+  });

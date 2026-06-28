@@ -12,13 +12,16 @@ import { useEffect, useState } from "react";
 import { I18nManager } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { BrandSplash } from "../src/components";
+import { DrawerProvider } from "../src/features/drawer/Drawer";
 import { AuthProvider } from "../src/features/session/auth";
 import { queryClient } from "../src/lib/queryClient";
+import { ThemeProvider, useThemeMode } from "../src/theme";
 
 // Force right-to-left for the whole app, regardless of device locale.
 // NOTE: in Expo Go the native RTL flag may only take effect after one manual
 // reload on first launch (press "r" in the Metro terminal, or shake → Reload).
-// The setting persists, so subsequent launches start in RTL.
+// The setting persists, so subsequent launches start in RTL. Layout is also
+// forced RTL at the Yoga level (Screen `direction: "rtl"`) so it works regardless.
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
 
@@ -30,7 +33,6 @@ export default function RootLayout() {
     Tajawal_500Medium,
     Tajawal_700Bold,
   });
-  const [splashDone, setSplashDone] = useState(false);
 
   useEffect(() => {
     if (fontsLoaded) {
@@ -42,16 +44,28 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <SafeAreaProvider>
-          <StatusBar style="dark" />
-          <Stack screenOptions={{ headerShown: false }} />
-          {!splashDone ? (
-            <BrandSplash ready={fontsLoaded} onFinish={() => setSplashDone(true)} />
-          ) : null}
-        </SafeAreaProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <SafeAreaProvider>
+            <DrawerProvider>
+              <Chrome fontsLoaded={fontsLoaded} />
+            </DrawerProvider>
+          </SafeAreaProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
+  );
+}
+
+function Chrome({ fontsLoaded }: { fontsLoaded: boolean }) {
+  const { mode } = useThemeMode();
+  const [splashDone, setSplashDone] = useState(false);
+  return (
+    <>
+      <StatusBar style={mode === "dark" ? "light" : "dark"} />
+      <Stack screenOptions={{ headerShown: false }} />
+      {!splashDone ? <BrandSplash ready={fontsLoaded} onFinish={() => setSplashDone(true)} /> : null}
+    </>
   );
 }

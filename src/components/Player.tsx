@@ -1,8 +1,8 @@
 import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { GestureResponderEvent, Pressable, StyleSheet, View } from "react-native";
 import { formatMillis } from "../lib/audio";
-import { colors, radius, spacing } from "../theme";
+import { ColorScheme, radius, spacing, useColors } from "../theme";
 import { AppText } from "./AppText";
 
 export type PlayerMarker = { id: string; timestampMs: number; color?: string };
@@ -19,6 +19,8 @@ type Props = {
 };
 
 export function Player({ uri, markers = [], onMarkerPress, onPosition, seekToMs, pauseSignal }: Props) {
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const player = useAudioPlayer({ uri });
   const status = useAudioPlayerStatus(player);
   const [barWidth, setBarWidth] = useState(0);
@@ -112,7 +114,8 @@ export function Player({ uri, markers = [], onMarkerPress, onPosition, seekToMs,
 const BAR_HEIGHT = 6;
 const MARKER_SIZE = 14;
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ColorScheme) =>
+  StyleSheet.create({
   wrap: {
     flexDirection: "row",
     alignItems: "center",

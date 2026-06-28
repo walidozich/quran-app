@@ -3,10 +3,11 @@ import { useState } from "react";
 import { AppText, AuthHero, Button, Card, Screen, TextField } from "../../src/components";
 import { signInWithEmail, useAuth } from "../../src/features/session/auth";
 import { t } from "../../src/i18n/ar";
-import { colors, spacing } from "../../src/theme";
+import { spacing, useColors } from "../../src/theme";
 
 export default function SignIn() {
   const router = useRouter();
+  const colors = useColors();
   const { refreshProfile } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

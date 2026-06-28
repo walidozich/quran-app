@@ -5,10 +5,11 @@ import { AppText, AuthHero, Button, Card, Screen, TextField } from "../../src/co
 import { signUpWithEmail, useAuth } from "../../src/features/session/auth";
 import { t } from "../../src/i18n/ar";
 import { UserRole } from "../../src/types/database";
-import { colors, spacing } from "../../src/theme";
+import { spacing, useColors } from "../../src/theme";
 
 export default function SignUp() {
   const router = useRouter();
+  const colors = useColors();
   const { refreshProfile } = useAuth();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");

@@ -8,7 +8,7 @@ import { buildThreads } from "../../../src/features/recordings/threads";
 import { useSession } from "../../../src/features/session/auth";
 import { t } from "../../../src/i18n/ar";
 import { RecordingStatus } from "../../../src/types/database";
-import { colors, spacing } from "../../../src/theme";
+import { spacing, useColors } from "../../../src/theme";
 
 function badgeFor(status: RecordingStatus): { status: BadgeStatus; label: string } {
   if (status === "reviewed") return { status: "reviewed", label: t("status.reviewed") };
@@ -17,6 +17,7 @@ function badgeFor(status: RecordingStatus): { status: BadgeStatus; label: string
 
 export default function StudentThread() {
   const router = useRouter();
+  const colors = useColors();
   const { rootId } = useLocalSearchParams<{ rootId: string }>();
   const { currentProfile } = useSession();
   const { data: recordings, isLoading } = useStudentRecordings(currentProfile.id);

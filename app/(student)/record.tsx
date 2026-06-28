@@ -14,7 +14,7 @@ import { useCreateRecording } from "../../src/features/recordings/api";
 import { useSession } from "../../src/features/session/auth";
 import { t } from "../../src/i18n/ar";
 import { ensureRecordingReady, formatMillis, setPlaybackMode } from "../../src/lib/audio";
-import { colors, spacing } from "../../src/theme";
+import { spacing, useColors } from "../../src/theme";
 
 export default function RecordScreen() {
   const router = useRouter();
@@ -23,6 +23,7 @@ export default function RecordScreen() {
     label?: string;
     classId?: string;
   }>();
+  const colors = useColors();
   const { currentProfile } = useSession();
   const { data: classes } = useStudentClasses(currentProfile.id);
   // Record into the class passed in the route; fall back to the first joined class.

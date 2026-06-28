@@ -1,5 +1,5 @@
 import { Text, TextProps, TextStyle } from "react-native";
-import { colors, textStyles } from "../theme";
+import { textStyles, useColors } from "../theme";
 
 type Variant = keyof typeof textStyles;
 
@@ -9,11 +9,12 @@ type Props = TextProps & {
   style?: TextStyle | TextStyle[];
 };
 
-export function AppText({ variant = "body", color = colors.text, style, ...rest }: Props) {
+export function AppText({ variant = "body", color, style, ...rest }: Props) {
+  const colors = useColors();
   return (
     <Text
       // RTL Arabic text aligns right by default
-      style={[textStyles[variant], { color, textAlign: "right", writingDirection: "rtl" }, style]}
+      style={[textStyles[variant], { color: color ?? colors.text, textAlign: "right", writingDirection: "rtl" }, style]}
       {...rest}
     />
   );
