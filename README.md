@@ -2,19 +2,19 @@
 
 An Arabic, right-to-left mobile app where **students record Quran recitations** and **teachers review them with timestamped annotations** — pinning a voice correction, a text comment, and tags to the exact moment of each mistake. Students consume feedback in context, filter their mistakes by tag to study weaknesses, and respond with new attempts that form a review thread.
 
-> **Status:** Runs **fully on-device by default** (local storage + local accounts + local file storage) — no Supabase or `.env` needed. The Supabase backend is kept intact behind a flag (`src/config/backend.ts` → `USE_LOCAL_BACKEND`). Email+password auth with a role chosen at signup. Only the Android APK build (Phase 10) remains. Best tested on a physical device. See `todo.md`.
+> **Status:** Runs against a **self-hosted Supabase server** (default) so multiple phones share one backend — a teacher on one phone reviews a student's recording from another, in real time. The server runs locally on the dev PC via the Supabase CLI (Docker) and is seeded with **10 demo users + one class**. A fully on-device mode is kept behind a flag for single-phone testing. See `todo.md`.
 
 ## Backend modes
 The data layer, auth, and file storage all switch on one flag:
 
 ```ts
 // src/config/backend.ts
-export const USE_LOCAL_BACKEND = true;  // local-only (default)
-// = false → use Supabase (run both migrations + set .env, see "Supabase setup")
+export const USE_LOCAL_BACKEND = false; // Supabase server (default — multi-device)
+// = true → fully on-device (AsyncStorage + local accounts), single phone only
 ```
 
-- **Local (default):** profiles, classes, recordings, annotations, and tags live in AsyncStorage; audio files are copied into the app's document directory; accounts are stored on-device. Everything works on a single phone with no network. Teacher and student are separate **local accounts** that share the on-device data.
-- **Supabase:** flip the flag to `false`, run the migrations, and fill `.env` (see below).
+- **Supabase (default):** profiles, classes, recordings, annotations, tags, and audio live on a shared **server**; accounts + credentials are managed by Supabase Auth (hashed, server-side); audio is stored in private Storage buckets. Required for the **two-phone teacher/student simulation**. See "Local server setup" below.
+- **On-device:** flip the flag to `true`; everything lives in AsyncStorage on one phone with no network. Useful for quick UI testing, but two phones can't see each other's data.
 
 ## Tech stack
 - **Expo SDK 54** (React Native 0.81, React 19.1) + **TypeScript**, **Expo Router** (file-based routing) — matches the Expo Go SDK 54 client
@@ -23,14 +23,39 @@ export const USE_LOCAL_BACKEND = true;  // local-only (default)
 - **TanStack Query** for server state ✅
 - **expo-audio** for recording/playback *(added Phase 4)*
 
-## Supabase setup
-1. Create a project at [supabase.com](https://supabase.com).
-2. In the dashboard SQL editor, run **both** migrations in order: `supabase/migrations/0001_init.sql` then `supabase/migrations/0002_auth_rls.sql`.
-3. In **Authentication → Sign In / Providers → Email**, disable **"Confirm email"** (so sign-up returns a session immediately — fine for the prototype).
-4. `cp .env.example .env` and fill `EXPO_PUBLIC_SUPABASE_URL` + `EXPO_PUBLIC_SUPABASE_ANON_KEY` (Project Settings → API).
-5. `npx expo start -c`, sign up a **teacher** and a **student** account, and run the loop.
+## Local server setup (self-hosted Supabase + two phones)
+The server runs on the dev PC via the Supabase CLI (Docker). Phones reach it over Wi-Fi.
 
-> Auth is email + password with a role chosen at signup. RLS is scoped to `auth.uid()` (migration `0002`): students see only their own + their class's data; teachers see only their own classes.
+1. **Start + seed the server** (Docker must be running):
+   ```bash
+   ./server.sh          # supabase start + grants + seed 10 users & 1 class
+   ```
+   Studio is at `http://127.0.0.1:54323`. Stop later with `npx supabase stop`.
+2. **Point the app at the server.** `.env` holds `EXPO_PUBLIC_SUPABASE_URL` (the PC's **LAN IP**, e.g. `http://192.168.1.213:54321`, so phones — not just `localhost` — can reach it) and the anon key. If the PC's IP changes, update `.env`.
+3. **Open the firewall** so the phones can reach the PC on the API + Metro ports (`54321`, `8081`). On this Fedora box, inbound LAN is dropped by default — see "Networking" below.
+4. **Run the app:** `./dev.sh --lan` (direct LAN, once the firewall is open) or `./dev.sh` (tunnel). Scan with Expo Go on each phone.
+5. Log in as a **teacher** on one phone and a **student** on the other, then run the loop.
+
+### Demo accounts (password `123456` for all)
+Seeded by `server.sh`. The class **حلقة الإمام الشاطبي** (join code **`QRN-QRAN`**) is owned by أحمد with all 8 students already enrolled.
+
+| Role | Email | Name |
+|------|-------|------|
+| 👨‍🏫 Teacher | `teacher1@quran.app` | الأستاذ أحمد |
+| 👩‍🏫 Teacher | `teacher2@quran.app` | الأستاذة مريم |
+| 👨‍🎓 Student | `student1@quran.app` | يوسف |
+| 👩‍🎓 Student | `student2@quran.app` | فاطمة |
+| 👨‍🎓 Student | `student3@quran.app` | عمر |
+| 👩‍🎓 Student | `student4@quran.app` | عائشة |
+| 👨‍🎓 Student | `student5@quran.app` | خالد |
+| 👩‍🎓 Student | `student6@quran.app` | زينب |
+| 👨‍🎓 Student | `student7@quran.app` | بلال |
+| 👩‍🎓 Student | `student8@quran.app` | سمية |
+
+> Auth is email + password (role chosen at signup; demo users pre-assigned). RLS is scoped to `auth.uid()` (migration `0002`): students see only their own + their class's data; teachers see only their own classes. Deploying to cloud Supabase later: run both migrations, set `.env` to the cloud URL/key, and run the seed against it.
+
+### Networking (why `./dev.sh` defaults to tunnel)
+This dev PC has many Docker bridge interfaces + Tailscale up. Two consequences: Expo mis-picks the host IP (fixed by `dev.sh`, which forces the real Wi-Fi IP), and inbound LAN traffic to the PC is dropped, so phones can't reach `54321`/`8081` directly until the firewall is opened. `./dev.sh` (tunnel) sidesteps both; `./dev.sh --lan` is faster once the firewall allows those ports.
 
 ## Architecture
 ```mermaid
@@ -51,7 +76,8 @@ flowchart TD
 ## Core loop
 ```mermaid
 flowchart LR
-    A[Student records] --> B[Upload + label]
+    J[Student joins<br/>one or more classes] --> A[Student records<br/>into a chosen class]
+    A --> B[Upload + label]
     B --> C[Teacher reviews:<br/>voice + text + tags]
     C --> D[Submit review]
     D --> E[Student sees feedback]
@@ -59,6 +85,12 @@ flowchart LR
     E --> G[New attempt as response]
     G --> C
 ```
+
+**Classes (Google-Classroom style):** a student can join **multiple classes**, each owned by a different teacher; every recording is submitted into a specific class.
+
+**Cross-device sync:** the backend is a shared server, so a teacher and student on two phones see each other's data. Queries refetch on app-focus and after a short stale window; a **reload button** in each screen header forces an immediate refresh on demand.
+
+**Review ergonomics:** tapping **"add note"** while reviewing **auto-pauses** playback at the current moment, so the teacher pins a remark without manually stopping first.
 
 ## Recording review lifecycle
 ```mermaid
