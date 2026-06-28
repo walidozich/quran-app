@@ -1,0 +1,125 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "../../config/supabase";
+import { ClassRow } from "../../types/database";
+import { genJoinCode } from "./joinCode";
+
+export type ClassMemberWithProfile = {
+  id: string;
+  joined_at: string;
+  student: { id: string; full_name: string };
+};
+
+// ---------------------------------------------------------------------------
+// Queries
+// ---------------------------------------------------------------------------
+export const classKeys = {
+  teacher: (teacherId: string) => ["classes", "teacher", teacherId] as const,
+  members: (classId: string) => ["classes", "members", classId] as const,
+  studentClass: (studentId: string) => ["classes", "student", studentId] as const,
+};
+
+async function fetchTeacherClasses(teacherId: string): Promise<ClassRow[]> {
+  const { data, error } = await supabase
+    .from("classes")
+    .select("*")
+    .eq("teacher_id", teacherId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export function useTeacherClasses(teacherId: string) {
+  return useQuery({
+    queryKey: classKeys.teacher(teacherId),
+    queryFn: () => fetchTeacherClasses(teacherId),
+  });
+}
+
+async function fetchClassMembers(classId: string): Promise<ClassMemberWithProfile[]> {
+  const { data, error } = await supabase
+    .from("class_members")
+    .select("id, joined_at, student:profiles(id, full_name)")
+    .eq("class_id", classId)
+    .order("joined_at", { ascending: true })
+    .returns<ClassMemberWithProfile[]>();
+  if (error) throw error;
+  return data ?? [];
+}
+
+export function useClassMembers(classId: string | undefined) {
+  return useQuery({
+    queryKey: classKeys.members(classId ?? "none"),
+    queryFn: () => fetchClassMembers(classId as string),
+    enabled: Boolean(classId),
+  });
+}
+
+async function fetchStudentClass(studentId: string): Promise<ClassRow | null> {
+  const { data, error } = await supabase
+    .from("class_members")
+    .select("class:classes(*)")
+    .eq("student_id", studentId)
+    .order("joined_at", { ascending: false })
+    .limit(1)
+    .returns<{ class: ClassRow }[]>();
+  if (error) throw error;
+  return data && data.length > 0 ? data[0].class : null;
+}
+
+export function useStudentClass(studentId: string) {
+  return useQuery({
+    queryKey: classKeys.studentClass(studentId),
+    queryFn: () => fetchStudentClass(studentId),
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Mutations
+// ---------------------------------------------------------------------------
+export function useCreateClass(teacherId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (name: string): Promise<ClassRow> => {
+      const { data, error } = await supabase
+        .from("classes")
+        .insert({ teacher_id: teacherId, name, join_code: genJoinCode() })
+        .select("*")
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: classKeys.teacher(teacherId) });
+    },
+  });
+}
+
+export class JoinClassError extends Error {}
+
+export function useJoinClass(studentId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (rawCode: string): Promise<ClassRow> => {
+      const code = rawCode.trim().toUpperCase();
+      const { data: cls, error: findErr } = await supabase
+        .from("classes")
+        .select("*")
+        .eq("join_code", code)
+        .maybeSingle();
+      if (findErr) throw findErr;
+      if (!cls) throw new JoinClassError("not_found");
+
+      const { error: joinErr } = await supabase
+        .from("class_members")
+        .upsert(
+          { class_id: cls.id, student_id: studentId },
+          { onConflict: "class_id,student_id", ignoreDuplicates: true }
+        );
+      if (joinErr) throw joinErr;
+      return cls;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: classKeys.studentClass(studentId) });
+    },
+  });
+}

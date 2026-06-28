@@ -1,0 +1,50 @@
+import { useRouter } from "expo-router";
+import { useState } from "react";
+import { AppText, Button, Card, Screen, TextField } from "../../src/components";
+import { JoinClassError, useJoinClass } from "../../src/features/classes/api";
+import { useSession } from "../../src/features/session/DevSessionProvider";
+import { t } from "../../src/i18n/ar";
+import { colors } from "../../src/theme";
+
+export default function JoinClass() {
+  const router = useRouter();
+  const { currentProfile } = useSession();
+  const [code, setCode] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const join = useJoinClass(currentProfile.id);
+
+  const onJoin = () => {
+    const trimmed = code.trim();
+    if (!trimmed) return;
+    setError(null);
+    join.mutate(trimmed, {
+      onSuccess: () => router.back(),
+      onError: (e) =>
+        setError(e instanceof JoinClassError ? t("classes.errorNotFound") : t("classes.errorGeneric")),
+    });
+  };
+
+  return (
+    <Screen scroll>
+      <AppText variant="title">{t("classes.joinTitle")}</AppText>
+      <TextField
+        label={t("classes.codeLabel")}
+        value={code}
+        onChangeText={setCode}
+        placeholder={t("classes.codePlaceholder")}
+        autoCapitalize="none"
+      />
+      {error ? (
+        <Card style={{ borderColor: colors.danger }}>
+          <AppText color={colors.danger}>{error}</AppText>
+        </Card>
+      ) : null}
+      <Button
+        label={t("classes.join")}
+        onPress={onJoin}
+        loading={join.isPending}
+        disabled={!code.trim()}
+      />
+    </Screen>
+  );
+}
