@@ -125,6 +125,14 @@ export const ar = {
     noMistakes: "لا توجد أخطاء موسومة بعد",
     total: "الإجمالي",
   },
+  teacherClass: {
+    allStudents: "كل الطلاب",
+    filterByStudent: "تصفية حسب الطالب",
+    noRecordings: "لا توجد تسجيلات في هذا الصف بعد",
+  },
+  studentClass: {
+    noRecordings: "لا توجد تسجيلات في هذا الصف بعد",
+  },
   thread: {
     title: "سلسلة المحاولات",
     attempt: "المحاولة",
