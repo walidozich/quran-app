@@ -28,6 +28,9 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: colors.background,
+    // Force RTL layout at the Yoga level so the UI is right-to-left even when
+    // the native I18nManager.forceRTL flag doesn't take effect (e.g. in Expo Go).
+    direction: "rtl",
   },
   scroll: {
     flexGrow: 1,

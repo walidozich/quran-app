@@ -237,5 +237,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     padding: spacing.lg,
     maxHeight: "90%",
+    // Modals render outside the Screen tree, so set RTL here too.
+    direction: "rtl",
   },
 });
