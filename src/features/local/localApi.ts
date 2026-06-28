@@ -149,6 +149,13 @@ export async function localFetchAnnotations(recordingId: string): Promise<Annota
   return Promise.all(anns.map(async (a) => ({ ...a, tags: await tagsForAnnotation(a.id) })));
 }
 
+/** All annotations a teacher has authored (for the dashboard's mistake stats). */
+export async function localFetchTeacherAnnotations(teacherId: string): Promise<AnnotationWithTags[]> {
+  const db = await getDb();
+  const anns = db.annotations.filter((a) => a.teacher_id === teacherId);
+  return Promise.all(anns.map(async (a) => ({ ...a, tags: await tagsForAnnotation(a.id) })));
+}
+
 async function localSetAnnotationTags(annotationId: string, tagIds: string[]): Promise<void> {
   await mutate((db) => {
     db.annotation_tags = db.annotation_tags.filter((at) => at.annotation_id !== annotationId);

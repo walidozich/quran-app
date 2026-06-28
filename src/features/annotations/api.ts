@@ -6,6 +6,7 @@ import { Annotation, Tag } from "../../types/database";
 import {
   localDeleteAnnotation,
   localFetchAnnotations,
+  localFetchTeacherAnnotations,
   localInsertAnnotation,
   localUpdateAnnotation,
 } from "../local/localApi";
@@ -33,6 +34,25 @@ export function useAnnotations(recordingId: string) {
   return useQuery({
     queryKey: annotationKeys.forRecording(recordingId),
     queryFn: () => fetchAnnotations(recordingId),
+  });
+}
+
+/** Every annotation a teacher has authored, with tags — powers the dashboard. */
+async function fetchTeacherAnnotations(teacherId: string): Promise<AnnotationWithTags[]> {
+  if (USE_LOCAL_BACKEND) return localFetchTeacherAnnotations(teacherId);
+  const { data, error } = await supabase
+    .from("annotations")
+    .select("*, tags(*)")
+    .eq("teacher_id", teacherId)
+    .returns<AnnotationWithTags[]>();
+  if (error) throw error;
+  return data ?? [];
+}
+
+export function useTeacherAnnotations(teacherId: string) {
+  return useQuery({
+    queryKey: ["annotations", "teacher", teacherId],
+    queryFn: () => fetchTeacherAnnotations(teacherId),
   });
 }
 
