@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
-import { AppText, Card, Screen, TagChip } from "../../src/components";
+import { AppText, Card, Screen, ScreenHeader, TagChip } from "../../src/components";
 import { AnnotationCard } from "../../src/features/annotations/AnnotationCard";
 import { AnnotationWithTags } from "../../src/features/annotations/api";
 import { useStudentAnnotations } from "../../src/features/tags/studyByTag";
@@ -29,7 +29,7 @@ export default function StudyByTag() {
 
   return (
     <Screen scroll>
-      <AppText variant="title">{t("study.title")}</AppText>
+      <ScreenHeader title={t("study.title")} />
 
       {isLoading ? (
         <ActivityIndicator color={colors.primary} />

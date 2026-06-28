@@ -8,7 +8,7 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { View } from "react-native";
-import { AppText, Button, Card, Screen, TextField } from "../../src/components";
+import { AppText, Button, Card, Screen, ScreenHeader, TextField } from "../../src/components";
 import { useStudentClasses } from "../../src/features/classes/api";
 import { useCreateRecording } from "../../src/features/recordings/api";
 import { useSession } from "../../src/features/session/auth";
@@ -96,7 +96,7 @@ export default function RecordScreen() {
   if (!studentClass) {
     return (
       <Screen>
-        <AppText variant="title">{t("record.title")}</AppText>
+        <ScreenHeader title={t("record.title")} reload={false} />
         <Card>
           <AppText color={colors.warning}>{t("record.needClass")}</AppText>
         </Card>
@@ -106,7 +106,7 @@ export default function RecordScreen() {
 
   return (
     <Screen scroll>
-      <AppText variant="title">{t("record.title")}</AppText>
+      <ScreenHeader title={t("record.title")} reload={false} />
       <AppText variant="subheading" color={colors.primary}>
         {t("record.classLabel")}: {studentClass.name}
       </AppText>

@@ -23,9 +23,14 @@ export default function TeacherHome() {
 
   return (
     <Screen scroll>
-      <ScreenHeader title={t("teacherHome.title")} subtitle={currentProfile.full_name} />
+      <ScreenHeader title={t("teacherHome.title")} subtitle={currentProfile.full_name} back={false} />
 
       <Button label={t("teacherHome.manageClass")} onPress={() => router.push("/(teacher)/manage-class")} />
+      <Button
+        label={t("dashboard.open")}
+        variant="secondary"
+        onPress={() => router.push("/(teacher)/dashboard")}
+      />
 
       <AppText variant="subheading">{t("teacherHome.queue")}</AppText>
       {isLoading ? (

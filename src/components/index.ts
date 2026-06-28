@@ -1,5 +1,7 @@
 export { Screen } from "./Screen";
 export { ScreenHeader } from "./ScreenHeader";
+export { BrandSplash } from "./BrandSplash";
+export { AuthHero } from "./AuthHero";
 export { AppText } from "./AppText";
 export { Button } from "./Button";
 export { Card } from "./Card";
@@ -9,3 +11,5 @@ export { TextField } from "./TextField";
 export { TagChip } from "./TagChip";
 export { Player } from "./Player";
 export type { PlayerMarker } from "./Player";
+export { StatTile, BarList, Donut, LegendDot } from "./Charts";
+export type { DonutSegment } from "./Charts";

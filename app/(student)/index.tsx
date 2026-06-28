@@ -27,7 +27,7 @@ export default function StudentHome() {
 
   return (
     <Screen scroll>
-      <ScreenHeader title={t("studentHome.title")} subtitle={currentProfile.full_name} />
+      <ScreenHeader title={t("studentHome.title")} subtitle={currentProfile.full_name} back={false} />
 
       <AppText variant="subheading">{t("studentHome.myClasses")}</AppText>
       {classLoading ? (
@@ -61,6 +61,11 @@ export default function StudentHome() {
         label={t("studentHome.studyByTag")}
         variant="secondary"
         onPress={() => router.push("/(student)/study")}
+      />
+      <Button
+        label={t("dashboard.open")}
+        variant="secondary"
+        onPress={() => router.push("/(student)/dashboard")}
       />
 
       <AppText variant="subheading">{t("studentHome.myRecordings")}</AppText>

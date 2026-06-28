@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { View } from "react-native";
-import { AppText, Button, Card, Screen, TextField } from "../../src/components";
+import { AppText, AuthHero, Button, Card, Screen, TextField } from "../../src/components";
 import { signUpWithEmail, useAuth } from "../../src/features/session/auth";
 import { t } from "../../src/i18n/ar";
 import { UserRole } from "../../src/types/database";
@@ -35,39 +35,41 @@ export default function SignUp() {
 
   return (
     <Screen scroll>
-      <AppText variant="title">{t("auth.signUpTitle")}</AppText>
+      <AuthHero subtitle={t("auth.signUpTitle")} />
 
-      <TextField label={t("auth.fullName")} value={fullName} onChangeText={setFullName} />
-      <TextField
-        label={t("auth.email")}
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-        keyboardType="email-address"
-      />
-      <TextField
-        label={t("auth.password")}
-        value={password}
-        onChangeText={setPassword}
-        autoCapitalize="none"
-        secureTextEntry
-      />
+      <Card>
+        <TextField label={t("auth.fullName")} value={fullName} onChangeText={setFullName} />
+        <TextField
+          label={t("auth.email")}
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
+        />
+        <TextField
+          label={t("auth.password")}
+          value={password}
+          onChangeText={setPassword}
+          autoCapitalize="none"
+          secureTextEntry
+        />
 
-      <AppText variant="subheading">{t("auth.roleQuestion")}</AppText>
-      <View style={{ flexDirection: "row", gap: spacing.sm }}>
-        <Button
-          label={t("roles.student")}
-          variant={role === "student" ? "primary" : "secondary"}
-          onPress={() => setRole("student")}
-          style={{ flex: 1 }}
-        />
-        <Button
-          label={t("roles.teacher")}
-          variant={role === "teacher" ? "primary" : "secondary"}
-          onPress={() => setRole("teacher")}
-          style={{ flex: 1 }}
-        />
-      </View>
+        <AppText variant="subheading">{t("auth.roleQuestion")}</AppText>
+        <View style={{ flexDirection: "row", gap: spacing.sm }}>
+          <Button
+            label={t("roles.student")}
+            variant={role === "student" ? "primary" : "secondary"}
+            onPress={() => setRole("student")}
+            style={{ flex: 1 }}
+          />
+          <Button
+            label={t("roles.teacher")}
+            variant={role === "teacher" ? "primary" : "secondary"}
+            onPress={() => setRole("teacher")}
+            style={{ flex: 1 }}
+          />
+        </View>
+      </Card>
 
       {error ? (
         <Card style={{ borderColor: colors.danger }}>

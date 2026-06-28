@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { AppText, Button, Card, Screen, TextField } from "../../src/components";
+import { AppText, Button, Card, Screen, ScreenHeader, TextField } from "../../src/components";
 import { JoinClassError, useJoinClass } from "../../src/features/classes/api";
 import { useSession } from "../../src/features/session/auth";
 import { t } from "../../src/i18n/ar";
@@ -26,7 +26,7 @@ export default function JoinClass() {
 
   return (
     <Screen scroll>
-      <AppText variant="title">{t("classes.joinTitle")}</AppText>
+      <ScreenHeader title={t("classes.joinTitle")} reload={false} />
       <TextField
         label={t("classes.codeLabel")}
         value={code}

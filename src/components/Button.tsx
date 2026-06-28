@@ -53,6 +53,11 @@ const styles = StyleSheet.create({
   },
   primary: {
     backgroundColor: colors.primary,
+    shadowColor: colors.primaryDeep,
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
   },
   secondary: {
     backgroundColor: colors.surface,
@@ -66,7 +71,8 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   pressed: {
-    opacity: 0.85,
+    opacity: 0.9,
+    transform: [{ scale: 0.985 }],
   },
   label: {
     textAlign: "center",

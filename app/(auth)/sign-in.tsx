@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { AppText, Button, Card, Screen, TextField } from "../../src/components";
+import { AppText, AuthHero, Button, Card, Screen, TextField } from "../../src/components";
 import { signInWithEmail, useAuth } from "../../src/features/session/auth";
 import { t } from "../../src/i18n/ar";
 import { colors, spacing } from "../../src/theme";
@@ -29,25 +29,24 @@ export default function SignIn() {
 
   return (
     <Screen scroll>
-      <AppText variant="title">{t("app.name")}</AppText>
-      <AppText variant="subheading" color={colors.textMuted}>
-        {t("auth.signInTitle")}
-      </AppText>
+      <AuthHero subtitle={t("auth.signInTitle")} />
 
-      <TextField
-        label={t("auth.email")}
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-        keyboardType="email-address"
-      />
-      <TextField
-        label={t("auth.password")}
-        value={password}
-        onChangeText={setPassword}
-        autoCapitalize="none"
-        secureTextEntry
-      />
+      <Card>
+        <TextField
+          label={t("auth.email")}
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
+        />
+        <TextField
+          label={t("auth.password")}
+          value={password}
+          onChangeText={setPassword}
+          autoCapitalize="none"
+          secureTextEntry
+        />
+      </Card>
 
       {error ? (
         <Card style={{ borderColor: colors.danger }}>

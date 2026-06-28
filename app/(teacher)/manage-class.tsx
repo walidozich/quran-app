@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ActivityIndicator, View } from "react-native";
-import { AppText, Button, Card, Screen, TextField } from "../../src/components";
+import { AppText, Button, Card, Screen, ScreenHeader, TextField } from "../../src/components";
 import {
   ClassMemberWithProfile,
   useClassMembers,
@@ -66,7 +66,7 @@ export default function ManageClass() {
 
   return (
     <Screen scroll>
-      <AppText variant="title">{t("classes.createTitle")}</AppText>
+      <ScreenHeader title={t("classes.createTitle")} />
       <TextField
         label={t("classes.nameLabel")}
         value={name}

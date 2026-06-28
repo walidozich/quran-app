@@ -4,6 +4,39 @@ An Arabic, right-to-left mobile app where **students record Quran recitations** 
 
 > **Status:** Runs against a **self-hosted Supabase server** (default) so multiple phones share one backend — a teacher on one phone reviews a student's recording from another, in real time. The server runs locally on the dev PC via the Supabase CLI (Docker) and is seeded with **10 demo users + one class**. A fully on-device mode is kept behind a flag for single-phone testing. See `todo.md`.
 
+## Quick start
+Prerequisites: **Node ≥ 20**, **Docker** running, the **Expo Go** app (SDK 54) on each phone, and the phones on the **same Wi-Fi** as the PC.
+
+```bash
+# 1. Install dependencies
+npm install
+
+# 2. Start + seed the backend (Supabase via Docker). Leave it running.
+./server.sh
+
+# 3. (first time only) open the firewall so phones can reach the PC
+sudo ufw allow from 192.168.1.0/24 to any port 8081 proto tcp   # Metro
+sudo ufw allow from 192.168.1.0/24 to any port 54321 proto tcp  # Supabase API
+
+# 4. Launch the app
+./dev.sh --lan      # direct LAN (fast).  Use ./dev.sh for tunnel mode instead.
+```
+
+Scan the QR with Expo Go on each phone. Log in as a **teacher** on one and a **student** on another (credentials below). Stop the backend when done with `npx supabase stop`.
+
+```mermaid
+flowchart LR
+    I["npm install"] --> S["./server.sh<br/>(Supabase + seed)"]
+    S --> F{"firewall<br/>open?"}
+    F -- "no (first run)" --> U["sudo ufw allow<br/>8081 + 54321"]
+    F -- "yes" --> D
+    U --> D["./dev.sh --lan"]
+    D --> Q["scan QR in Expo Go<br/>on each phone"]
+    Q --> L["log in:<br/>teacher / student"]
+```
+
+> If a phone is stuck on a white screen with a blue bar, the LAN path is blocked — use `./dev.sh` (tunnel) instead. If the PC's IP changed, update `EXPO_PUBLIC_SUPABASE_URL` in `.env`. See "Networking" below.
+
 ## Backend modes
 The data layer, auth, and file storage all switch on one flag:
 
@@ -73,6 +106,49 @@ flowchart TD
     SB --> AUTH[(Auth: email + password)]
 ```
 
+### Deployment (two phones + dev PC)
+The phones reach the PC's Supabase over Wi-Fi; the dev PC runs the whole backend as Docker containers behind one gateway (Kong, port `54321`).
+```mermaid
+flowchart LR
+    subgraph Phones
+      T[Teacher phone<br/>Expo Go]
+      ST[Student phone<br/>Expo Go]
+    end
+    subgraph PC[Dev PC]
+      M[Metro :8081<br/>JS bundle]
+      subgraph SB[Supabase stack — Docker]
+        K[Kong gateway :54321]
+        K --> AU[Auth]
+        K --> RE[REST]
+        K --> STO[Storage]
+        AU --> PG[(Postgres)]
+        RE --> PG
+        STO --> PG
+      end
+    end
+    T -->|bundle| M
+    ST -->|bundle| M
+    T -->|API + audio| K
+    ST -->|API + audio| K
+```
+
+### How two devices stay in sync
+```mermaid
+sequenceDiagram
+    participant S as Student phone
+    participant DB as Supabase server
+    participant T as Teacher phone
+    S->>DB: upload recording (audio + row)
+    Note over T: teacher taps ⟳ reload (or refocuses app)
+    T->>DB: refetch class recordings
+    DB-->>T: new recording appears
+    T->>DB: add annotation + submit review
+    Note over S: student taps ⟳ reload
+    S->>DB: refetch
+    DB-->>S: review + tags appear
+    S->>DB: new attempt (responds_to) → thread continues
+```
+
 ## Core loop
 ```mermaid
 flowchart LR
@@ -92,6 +168,13 @@ flowchart LR
 
 **Review ergonomics:** tapping **"add note"** while reviewing **auto-pauses** playback at the current moment, so the teacher pins a remark without manually stopping first.
 
+**Dashboards:** each role has a stats screen (charts built on `react-native-svg`, no extra chart lib). The **student** sees totals, a review-status donut, and their **most common mistakes** (top tags). The **teacher** sees class/student/recording counts, a recording-status donut, and the **most common mistakes across their students** — so they can spot which Tajweed errors to focus on.
+
+## Design & branding
+Visual identity drawn from the *mushaf* (illuminated manuscript): **deep emerald** (`#0E5E4E`), **warm gold** (`#C9A227`), parchment background, **Tajawal** Arabic type. The signature element is a thin gold rule with a centered diamond (a nod to mushaf section borders) under every screen header. Launch shows an emerald **brand splash** (`BrandSplash`) with the logo, then a branded sign-in hero (`AuthHero`). Every screen header (`ScreenHeader`) carries a back arrow (RTL → points right) and the reload button.
+
+**Logo:** the app renders `assets/logo.svg` as a component (via `react-native-svg-transformer`). A placeholder rub-el-hizb is committed; replace `assets/logo.svg` with your own (same path + name) and restart Metro with cache clear (`./dev.sh --lan -c`). For the native app icon, replace `assets/icon.png` (1024×1024 PNG).
+
 ## Recording review lifecycle
 ```mermaid
 stateDiagram-v2
@@ -103,19 +186,15 @@ stateDiagram-v2
     Reviewed --> [*]
 ```
 
-## Getting started (local mode — default)
+## On-device mode (single phone, no server)
+For quick UI testing without the backend: set `USE_LOCAL_BACKEND = true` in `src/config/backend.ts`, then:
 ```bash
 npm install
-./dev.sh               # tunnel mode — scan the QR with Expo Go on Android
+./dev.sh --lan         # or ./dev.sh for tunnel mode
 ```
-`./dev.sh` defaults to **tunnel mode**. On some networks (and on the Linux dev box,
-where Docker's firewall rules drop inbound LAN traffic) the phone cannot reach the
-dev server directly — Expo Go gets stuck on a white screen with the blue loading
-bar. Tunnel routes through Expo's relay and avoids that (needs internet on both
-devices). If your LAN works, `./dev.sh --lan` is faster — it auto-detects and
-forces the real Wi-Fi IP (Expo otherwise mis-picks a Docker/Tailscale interface).
+No `.env`, Docker, or `server.sh` needed — data lives on the one phone. Create a teacher and a student account on the device and run the loop locally. (Two phones can't share data in this mode; use the default Supabase setup above for that.)
 
-No `.env` or backend needed. On the device, create a **teacher** account and a **student** account, then run the loop on the one phone. (For the Supabase backend instead, see "Backend modes" + "Supabase setup".)
+`./dev.sh` chooses the connection: `--lan` forces the PC's real Wi-Fi IP (fast, needs the firewall open); plain `./dev.sh` uses **tunnel mode** (routes through Expo's relay — slower, but works when the LAN path is blocked).
 
 ## Project layout
 ```
