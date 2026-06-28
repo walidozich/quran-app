@@ -170,6 +170,23 @@ flowchart LR
 
 **Dashboards:** each role has a stats screen (charts built on `react-native-svg`, no extra chart lib). The **student** sees totals, a review-status donut, and their **most common mistakes** (top tags). The **teacher** sees class/student/recording counts, a recording-status donut, and the **most common mistakes across their students** — so they can spot which Tajweed errors to focus on.
 
+## Offline vs online
+In the default Supabase mode the data lives on a shared server, so anything that **shares or syncs** needs a connection. **Capturing** a recitation works offline; sending, reviewing, and viewing stats do not.
+
+| Action | Works offline? |
+|---|---|
+| Recording a recitation (capturing audio) | ✅ — `expo-audio` writes a local file |
+| Playing your own just-recorded clip (pre-upload) | ✅ — local file |
+| Staying logged in across launches | ✅ — session token cached |
+| Viewing data already loaded this session | 🟡 in-memory only (lost on restart) |
+| Log in / sign up | ❌ Supabase Auth |
+| Uploading a recording / correction audio | ❌ Supabase Storage |
+| Loading classes, recordings, reviews, tags | ❌ Supabase REST |
+| Teacher review (fetch + play student audio) | ❌ streamed from Storage |
+| Dashboards / charts | ❌ aggregated from server data |
+
+**Fully-offline alternative:** flip `USE_LOCAL_BACKEND = true` — everything lives on one phone (no network), but two phones can't share data (single-device only). A true *offline-first* product (queue uploads, persist cache for offline review) is future work, not yet built.
+
 ## Design & branding
 Visual identity drawn from the *mushaf* (illuminated manuscript): **deep emerald** (`#0E5E4E`), **warm gold** (`#C9A227`), parchment background, **Tajawal** Arabic type. The signature element is a thin gold rule with a centered diamond (a nod to mushaf section borders) under every screen header. Launch shows an emerald **brand splash** (`BrandSplash`) with the logo, then a branded sign-in hero (`AuthHero`). Every screen header (`ScreenHeader`) carries a back arrow (RTL → points right) and the reload button.
 
