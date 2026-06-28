@@ -1,71 +1,67 @@
-import { View } from "react-native";
-import {
-  AppText,
-  Badge,
-  Button,
-  Card,
-  Screen,
-  TagChip,
-  TextField,
-} from "../src/components";
+import { ActivityIndicator, View } from "react-native";
+import { AppText, Card, Screen, TagChip } from "../src/components";
+import { isSupabaseConfigured } from "../src/config/supabase";
+import { useSession } from "../src/features/session/DevSessionProvider";
+import { RoleSwitcher } from "../src/features/session/RoleSwitcher";
+import { useTags } from "../src/features/tags/useTags";
 import { t } from "../src/i18n/ar";
-import { spacing } from "../src/theme";
-import { useState } from "react";
+import { colors, spacing } from "../src/theme";
 
-const demoTags = [
-  t("tags.madd"),
-  t("tags.ghunnah"),
-  t("tags.qalqalah"),
-  t("tags.idgham"),
-  t("tags.ikhfa"),
-  t("tags.makhraj"),
-];
+function TagsFromDb() {
+  const { data, isLoading, isError } = useTags();
+
+  if (isLoading) {
+    return (
+      <View style={{ flexDirection: "row", gap: spacing.sm, alignItems: "center" }}>
+        <ActivityIndicator color={colors.primary} />
+        <AppText color={colors.textMuted}>{t("tagsState.loading")}</AppText>
+      </View>
+    );
+  }
+  if (isError) {
+    return <AppText color={colors.danger}>{t("tagsState.error")}</AppText>;
+  }
+  if (!data || data.length === 0) {
+    return <AppText color={colors.textMuted}>{t("tagsState.empty")}</AppText>;
+  }
+  return (
+    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
+      {data.map((tag) => (
+        <TagChip key={tag.id} label={tag.name} color={tag.color} />
+      ))}
+    </View>
+  );
+}
 
 export default function Index() {
-  const [label, setLabel] = useState("");
-  const [selected, setSelected] = useState(0);
+  const { currentProfile, role } = useSession();
 
   return (
     <Screen scroll>
       <AppText variant="title">{t("app.name")}</AppText>
-      <AppText variant="subheading" color="#6B7280">
+      <AppText variant="subheading" color={colors.textMuted}>
         {t("home.tagline")}
       </AppText>
 
-      <View style={{ gap: spacing.sm, marginTop: spacing.sm }}>
-        <Button label={t("demo.primaryButton")} onPress={() => {}} />
-        <Button label={t("demo.secondaryButton")} variant="secondary" onPress={() => {}} />
-      </View>
-
-      <TextField
-        label={t("demo.fieldLabel")}
-        value={label}
-        onChangeText={setLabel}
-        placeholder={t("demo.fieldPlaceholder")}
-      />
-
       <Card>
-        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-          <AppText variant="heading">{t("demo.cardTitle")}</AppText>
-          <Badge label={t("status.reviewed")} status="reviewed" />
-        </View>
-        <AppText variant="body" color="#6B7280">
-          {t("demo.cardBody")}
+        <AppText variant="heading">{t("dev.title")}</AppText>
+        <AppText color={colors.textMuted}>
+          {t("dev.signedInAs")}: {currentProfile.full_name} ({t(`roles.${role}`)})
         </AppText>
+        <RoleSwitcher />
       </Card>
 
-      <AppText variant="subheading">{t("demo.tagsTitle")}</AppText>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
-        {demoTags.map((tag, i) => (
-          <TagChip key={tag} label={tag} selected={i === selected} onPress={() => setSelected(i)} />
-        ))}
-      </View>
-
-      <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.sm }}>
-        <Badge label={t("status.pending")} status="pending" />
-        <Badge label={t("status.draft")} status="draft" />
-        <Badge label={t("status.reviewed")} status="reviewed" />
-      </View>
+      <AppText variant="subheading">{t("tagsState.title")}</AppText>
+      {isSupabaseConfigured ? (
+        <TagsFromDb />
+      ) : (
+        <Card>
+          <AppText variant="heading" color={colors.warning}>
+            {t("setup.needed")}
+          </AppText>
+          <AppText color={colors.textMuted}>{t("setup.body")}</AppText>
+        </Card>
+      )}
     </Screen>
   );
 }

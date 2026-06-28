@@ -2,14 +2,22 @@
 
 An Arabic, right-to-left mobile app where **students record Quran recitations** and **teachers review them with timestamped annotations** — pinning a voice correction, a text comment, and tags to the exact moment of each mistake. Students consume feedback in context, filter their mistakes by tag to study weaknesses, and respond with new attempts that form a review thread.
 
-> **Status:** Phase 1 complete — forced RTL, Tajawal font, theme + Arabic strings, and a base component kit (`Screen`, `AppText`, `Button`, `Card`, `Badge`, `TextField`, `TagChip`). See `todo.md` for the phase plan.
+> **Status:** Phase 2 in progress — Supabase schema + RLS + seeded tags (migration `supabase/migrations/0001_init.sql`), typed client, TanStack Query, and a dev session stub (role switcher). Needs a Supabase project + `.env` to run. See `todo.md`.
 
 ## Tech stack
 - **Expo (React Native)** + **TypeScript**, **Expo Router** (file-based routing)
 - **Tajawal** font, forced **RTL** — all copy in `src/i18n/ar.ts` ✅
-- **Supabase** — Postgres + Storage + Auth + RLS *(added Phase 2)*
-- **TanStack Query** for server state *(added Phase 2)*
+- **Supabase** — Postgres + Storage + Auth + RLS ✅ (auth wired in Phase 9)
+- **TanStack Query** for server state ✅
 - **expo-audio** for recording/playback *(added Phase 4)*
+
+## Supabase setup (Phase 2)
+1. Create a project at [supabase.com](https://supabase.com).
+2. In the dashboard SQL editor, run `supabase/migrations/0001_init.sql`.
+3. `cp .env.example .env` and fill `EXPO_PUBLIC_SUPABASE_URL` + `EXPO_PUBLIC_SUPABASE_ANON_KEY` (Project Settings → API).
+4. `npx expo start -c` and confirm the seeded Arabic tags load on the home screen.
+
+> RLS in Phase 2 is **permissive for development** (no real auth yet) and is tightened to `auth.uid()` in Phase 9.
 
 ## Architecture
 ```mermaid
