@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { ActivityIndicator, Pressable, View } from "react-native";
-import { AppText, Badge, Button, Card, Screen } from "../../src/components";
+import { AppText, Badge, Button, Card, Screen, ScreenHeader } from "../../src/components";
 import { BadgeStatus } from "../../src/components/Badge";
 import { useTeacherRecordings } from "../../src/features/recordings/api";
 import { buildThreads } from "../../src/features/recordings/threads";
@@ -23,10 +23,7 @@ export default function TeacherHome() {
 
   return (
     <Screen scroll>
-      <AppText variant="title">{t("teacherHome.title")}</AppText>
-      <AppText variant="subheading" color={colors.textMuted}>
-        {currentProfile.full_name}
-      </AppText>
+      <ScreenHeader title={t("teacherHome.title")} subtitle={currentProfile.full_name} />
 
       <Button label={t("teacherHome.manageClass")} onPress={() => router.push("/(teacher)/manage-class")} />
 

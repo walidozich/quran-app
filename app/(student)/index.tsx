@@ -1,8 +1,8 @@
 import { useRouter } from "expo-router";
 import { ActivityIndicator, Pressable, View } from "react-native";
-import { AppText, Badge, Button, Card, Screen } from "../../src/components";
+import { AppText, Badge, Button, Card, Screen, ScreenHeader } from "../../src/components";
 import { BadgeStatus } from "../../src/components/Badge";
-import { useStudentClass } from "../../src/features/classes/api";
+import { useStudentClasses } from "../../src/features/classes/api";
 import { useStudentRecordings } from "../../src/features/recordings/api";
 import { buildThreads } from "../../src/features/recordings/threads";
 import { useAuth, useSession } from "../../src/features/session/auth";
@@ -20,34 +20,43 @@ export default function StudentHome() {
   const router = useRouter();
   const { currentProfile } = useSession();
   const { signOut } = useAuth();
-  const { data: studentClass, isLoading: classLoading } = useStudentClass(currentProfile.id);
+  const { data: classes, isLoading: classLoading } = useStudentClasses(currentProfile.id);
   const { data: recordings, isLoading: recLoading } = useStudentRecordings(currentProfile.id);
+
+  const hasClasses = (classes?.length ?? 0) > 0;
 
   return (
     <Screen scroll>
-      <AppText variant="title">{t("studentHome.title")}</AppText>
-      <AppText variant="subheading" color={colors.textMuted}>
-        {currentProfile.full_name}
-      </AppText>
+      <ScreenHeader title={t("studentHome.title")} subtitle={currentProfile.full_name} />
 
-      <Card>
-        <AppText variant="heading">{t("studentHome.yourClass")}</AppText>
-        {classLoading ? (
-          <ActivityIndicator color={colors.primary} />
-        ) : studentClass ? (
-          <AppText variant="subheading" color={colors.primary}>
-            {studentClass.name}
-          </AppText>
-        ) : (
-          <AppText color={colors.textMuted}>{t("studentHome.noClass")}</AppText>
-        )}
-      </Card>
-
-      {studentClass ? (
-        <Button label={t("studentHome.newRecording")} onPress={() => router.push("/(student)/record")} />
+      <AppText variant="subheading">{t("studentHome.myClasses")}</AppText>
+      {classLoading ? (
+        <ActivityIndicator color={colors.primary} />
+      ) : hasClasses ? (
+        classes!.map((cls) => (
+          <Card key={cls.id}>
+            <AppText variant="heading">{cls.name}</AppText>
+            <AppText variant="caption" color={colors.textMuted}>
+              {t("studentHome.teacher")}: {cls.teacher?.full_name ?? "—"}
+            </AppText>
+            <Button
+              label={t("studentHome.recordHere")}
+              onPress={() => router.push(`/(student)/record?classId=${cls.id}`)}
+              style={{ marginTop: spacing.sm }}
+            />
+          </Card>
+        ))
       ) : (
-        <Button label={t("studentHome.joinClass")} onPress={() => router.push("/(student)/join-class")} />
+        <Card>
+          <AppText color={colors.textMuted}>{t("studentHome.noClass")}</AppText>
+        </Card>
       )}
+
+      <Button
+        label={hasClasses ? t("studentHome.joinAnother") : t("studentHome.joinClass")}
+        variant={hasClasses ? "secondary" : "primary"}
+        onPress={() => router.push("/(student)/join-class")}
+      />
       <Button
         label={t("studentHome.studyByTag")}
         variant="secondary"

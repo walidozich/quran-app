@@ -5,7 +5,7 @@ import {
   RecordingStatus,
   Tag,
 } from "../../types/database";
-import type { ClassMemberWithProfile } from "../classes/api";
+import type { ClassMemberWithProfile, ClassWithTeacher } from "../classes/api";
 import { genJoinCode, JoinClassError } from "../classes/joinCode";
 import type { AnnotationWithTags } from "../annotations/api";
 import type { RecordingWithStudent } from "../recordings/api";
@@ -38,13 +38,17 @@ export async function localFetchClassMembers(classId: string): Promise<ClassMemb
     });
 }
 
-export async function localFetchStudentClass(studentId: string): Promise<ClassRow | null> {
+export async function localFetchStudentClasses(studentId: string): Promise<ClassWithTeacher[]> {
   const db = await getDb();
-  const memberships = db.class_members
+  return db.class_members
     .filter((m) => m.student_id === studentId)
-    .sort((a, b) => b.joined_at.localeCompare(a.joined_at));
-  if (memberships.length === 0) return null;
-  return db.classes.find((c) => c.id === memberships[0].class_id) ?? null;
+    .sort((a, b) => b.joined_at.localeCompare(a.joined_at))
+    .map((m) => db.classes.find((c) => c.id === m.class_id))
+    .filter((c): c is ClassRow => Boolean(c))
+    .map((c) => ({
+      ...c,
+      teacher: db.profiles.find((p) => p.id === c.teacher_id) ?? null,
+    }));
 }
 
 export async function localCreateClass(teacherId: string, name: string): Promise<ClassRow> {

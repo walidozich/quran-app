@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
-import { AppText, Badge, Button, Screen } from "../../../src/components";
+import { AppText, Badge, Button, Screen, ScreenHeader } from "../../../src/components";
 import { BadgeStatus } from "../../../src/components/Badge";
 import { useTeacherRecordings } from "../../../src/features/recordings/api";
 import { RecordingReviewPanel } from "../../../src/features/recordings/RecordingReviewPanel";
@@ -41,7 +41,7 @@ export default function TeacherThread() {
 
   return (
     <Screen scroll>
-      <AppText variant="title">{thread.label}</AppText>
+      <ScreenHeader title={thread.label} />
       <AppText variant="caption" color={colors.textMuted}>
         {t("teacherHome.by")}: {thread.latest.student.full_name}
       </AppText>

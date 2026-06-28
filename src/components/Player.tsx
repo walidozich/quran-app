@@ -14,9 +14,11 @@ type Props = {
   onPosition?: (ms: number) => void;
   /** When this value changes to a number, the player seeks there and plays. */
   seekToMs?: number | null;
+  /** Increment this to pause playback (e.g. when opening the annotation editor). */
+  pauseSignal?: number;
 };
 
-export function Player({ uri, markers = [], onMarkerPress, onPosition, seekToMs }: Props) {
+export function Player({ uri, markers = [], onMarkerPress, onPosition, seekToMs, pauseSignal }: Props) {
   const player = useAudioPlayer({ uri });
   const status = useAudioPlayerStatus(player);
   const [barWidth, setBarWidth] = useState(0);
@@ -39,6 +41,16 @@ export function Player({ uri, markers = [], onMarkerPress, onPosition, seekToMs 
       player.play();
     }
   }, [seekToMs, player]);
+
+  // External pause requests (e.g. teacher taps "add note" — pause automatically
+  // so they don't have to stop playback first).
+  const lastPause = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    if (pauseSignal != null && pauseSignal !== lastPause.current) {
+      lastPause.current = pauseSignal;
+      player.pause();
+    }
+  }, [pauseSignal, player]);
 
   const togglePlay = () => {
     if (status.playing) player.pause();

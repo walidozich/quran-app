@@ -5,7 +5,7 @@ import { ClassRow } from "../../types/database";
 import {
   localCreateClass,
   localFetchClassMembers,
-  localFetchStudentClass,
+  localFetchStudentClasses,
   localFetchTeacherClasses,
   localJoinClass,
 } from "../local/localApi";
@@ -19,13 +19,16 @@ export type ClassMemberWithProfile = {
   student: { id: string; full_name: string };
 };
 
+/** A class a student belongs to, with its owning teacher's name. */
+export type ClassWithTeacher = ClassRow & { teacher: { full_name: string } | null };
+
 // ---------------------------------------------------------------------------
 // Queries
 // ---------------------------------------------------------------------------
 export const classKeys = {
   teacher: (teacherId: string) => ["classes", "teacher", teacherId] as const,
   members: (classId: string) => ["classes", "members", classId] as const,
-  studentClass: (studentId: string) => ["classes", "student", studentId] as const,
+  studentClasses: (studentId: string) => ["classes", "studentList", studentId] as const,
 };
 
 async function fetchTeacherClasses(teacherId: string): Promise<ClassRow[]> {
@@ -66,23 +69,23 @@ export function useClassMembers(classId: string | undefined) {
   });
 }
 
-async function fetchStudentClass(studentId: string): Promise<ClassRow | null> {
-  if (USE_LOCAL_BACKEND) return localFetchStudentClass(studentId);
+async function fetchStudentClasses(studentId: string): Promise<ClassWithTeacher[]> {
+  if (USE_LOCAL_BACKEND) return localFetchStudentClasses(studentId);
   const { data, error } = await supabase
     .from("class_members")
-    .select("class:classes(*)")
+    .select("class:classes(*, teacher:profiles(full_name))")
     .eq("student_id", studentId)
     .order("joined_at", { ascending: false })
-    .limit(1)
-    .returns<{ class: ClassRow }[]>();
+    .returns<{ class: ClassWithTeacher }[]>();
   if (error) throw error;
-  return data && data.length > 0 ? data[0].class : null;
+  return (data ?? []).map((row) => row.class).filter(Boolean);
 }
 
-export function useStudentClass(studentId: string) {
+/** All classes a student has joined (Google-Classroom style — many per student). */
+export function useStudentClasses(studentId: string) {
   return useQuery({
-    queryKey: classKeys.studentClass(studentId),
-    queryFn: () => fetchStudentClass(studentId),
+    queryKey: classKeys.studentClasses(studentId),
+    queryFn: () => fetchStudentClasses(studentId),
   });
 }
 
@@ -132,7 +135,7 @@ export function useJoinClass(studentId: string) {
       return cls;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: classKeys.studentClass(studentId) });
+      qc.invalidateQueries({ queryKey: classKeys.studentClasses(studentId) });
     },
   });
 }

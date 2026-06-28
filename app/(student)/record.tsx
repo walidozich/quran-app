@@ -9,7 +9,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { View } from "react-native";
 import { AppText, Button, Card, Screen, TextField } from "../../src/components";
-import { useStudentClass } from "../../src/features/classes/api";
+import { useStudentClasses } from "../../src/features/classes/api";
 import { useCreateRecording } from "../../src/features/recordings/api";
 import { useSession } from "../../src/features/session/auth";
 import { t } from "../../src/i18n/ar";
@@ -18,12 +18,15 @@ import { colors, spacing } from "../../src/theme";
 
 export default function RecordScreen() {
   const router = useRouter();
-  const { respondsTo, label: inheritedLabel } = useLocalSearchParams<{
+  const { respondsTo, label: inheritedLabel, classId } = useLocalSearchParams<{
     respondsTo?: string;
     label?: string;
+    classId?: string;
   }>();
   const { currentProfile } = useSession();
-  const { data: studentClass } = useStudentClass(currentProfile.id);
+  const { data: classes } = useStudentClasses(currentProfile.id);
+  // Record into the class passed in the route; fall back to the first joined class.
+  const studentClass = classes?.find((c) => c.id === classId) ?? classes?.[0] ?? null;
 
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const recorderState = useAudioRecorderState(recorder);
@@ -104,6 +107,9 @@ export default function RecordScreen() {
   return (
     <Screen scroll>
       <AppText variant="title">{t("record.title")}</AppText>
+      <AppText variant="subheading" color={colors.primary}>
+        {t("record.classLabel")}: {studentClass.name}
+      </AppText>
 
       <Card>
         {recorderState.isRecording ? (

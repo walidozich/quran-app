@@ -1,7 +1,7 @@
 import { useLocalSearchParams } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
-import { AppText, Button, Card, Player, Screen } from "../../../src/components";
+import { AppText, Button, Card, Player, Screen, ScreenHeader } from "../../../src/components";
 import { PlayerMarker } from "../../../src/components/Player";
 import { AnnotationCard } from "../../../src/features/annotations/AnnotationCard";
 import { AnnotationEditor } from "../../../src/features/annotations/AnnotationEditor";
@@ -44,6 +44,7 @@ export default function ReviewScreen() {
   }, []);
 
   const [seekToMs, setSeekToMs] = useState<number | null>(null);
+  const [pauseSignal, setPauseSignal] = useState(0);
   const [editorVisible, setEditorVisible] = useState(false);
   const [editorMode, setEditorMode] = useState<"create" | "edit">("create");
   const [editing, setEditing] = useState<AnnotationWithTags | null>(null);
@@ -51,6 +52,7 @@ export default function ReviewScreen() {
 
   const openCreate = () => {
     setCreateTimestamp(currentMsRef.current);
+    setPauseSignal((n) => n + 1); // auto-pause playback at the current moment
     setEditing(null);
     setEditorMode("create");
     setEditorVisible(true);
@@ -84,7 +86,7 @@ export default function ReviewScreen() {
 
   return (
     <Screen scroll>
-      <AppText variant="title">{recording.label}</AppText>
+      <ScreenHeader title={recording.label} />
 
       <Card>
         {audioUrl ? (
@@ -94,6 +96,7 @@ export default function ReviewScreen() {
             onMarkerPress={onMarkerPress}
             onPosition={onPosition}
             seekToMs={seekToMs}
+            pauseSignal={pauseSignal}
           />
         ) : (
           <ActivityIndicator color={colors.primary} />

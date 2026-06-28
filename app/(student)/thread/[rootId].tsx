@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
-import { AppText, Badge, Button, Screen } from "../../../src/components";
+import { AppText, Badge, Button, Screen, ScreenHeader } from "../../../src/components";
 import { BadgeStatus } from "../../../src/components/Badge";
 import { useStudentRecordings } from "../../../src/features/recordings/api";
 import { RecordingReviewPanel } from "../../../src/features/recordings/RecordingReviewPanel";
@@ -42,7 +42,7 @@ export default function StudentThread() {
 
   return (
     <Screen scroll>
-      <AppText variant="title">{thread.label}</AppText>
+      <ScreenHeader title={thread.label} />
 
       {thread.attempts.map((attempt, index) => {
         const badge = badgeFor(attempt.status);
@@ -64,7 +64,7 @@ export default function StudentThread() {
           label={t("thread.newAttempt")}
           onPress={() =>
             router.push(
-              `/(student)/record?respondsTo=${latest.id}&label=${encodeURIComponent(thread.label)}`
+              `/(student)/record?respondsTo=${latest.id}&label=${encodeURIComponent(thread.label)}&classId=${latest.class_id}`
             )
           }
         />
