@@ -2,7 +2,7 @@
 
 An Arabic, right-to-left mobile app where **students record Quran recitations** and **teachers review them with timestamped annotations** — pinning a voice correction, a text comment, and tags to the exact moment of each mistake. Students consume feedback in context, filter their mistakes by tag to study weaknesses, and respond with new attempts that form a review thread.
 
-> **Status:** Phase 4 complete — students record recitations (expo-audio, m4a), preview, label, and upload to Supabase Storage; recordings list on the student dashboard with status badges. Best tested on a physical device (microphone). Needs a Supabase project + `.env` (see setup below). See `todo.md`.
+> **Status:** Phase 5 complete — teachers review recordings with timestamped annotations (voice correction + text + tags, custom tags supported), draftable and re-editable; recording lifecycle pending → in_review → reviewed. Best tested on a physical device. Needs a Supabase project + `.env` (see setup below). See `todo.md`.
 
 ## Tech stack
 - **Expo (React Native)** + **TypeScript**, **Expo Router** (file-based routing)
@@ -45,6 +45,17 @@ flowchart LR
     E --> F[Study by tag]
     E --> G[New attempt as response]
     G --> C
+```
+
+## Recording review lifecycle
+```mermaid
+stateDiagram-v2
+    [*] --> Pending: student uploads
+    Pending --> InReview: teacher adds first annotation (draft, hidden from student)
+    InReview --> InReview: add/edit annotations (saved, still hidden)
+    InReview --> Reviewed: teacher submits review
+    Reviewed --> Reviewed: teacher edits (live to student)
+    Reviewed --> [*]
 ```
 
 ## Getting started

@@ -1,12 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../config/supabase";
 import { uploadAudio } from "../../lib/audio";
-import { Recording } from "../../types/database";
+import { Recording, RecordingStatus } from "../../types/database";
+
+export type RecordingWithStudent = Recording & { student: { full_name: string } };
 
 export const recordingKeys = {
   student: (studentId: string) => ["recordings", "student", studentId] as const,
-  class: (classId: string) => ["recordings", "class", classId] as const,
+  teacher: (teacherId: string) => ["recordings", "teacher", teacherId] as const,
   detail: (id: string) => ["recordings", "detail", id] as const,
+  signedUrl: (path: string) => ["recordings", "signed", path] as const,
 };
 
 async function fetchStudentRecordings(studentId: string): Promise<Recording[]> {
@@ -23,6 +26,85 @@ export function useStudentRecordings(studentId: string) {
   return useQuery({
     queryKey: recordingKeys.student(studentId),
     queryFn: () => fetchStudentRecordings(studentId),
+  });
+}
+
+async function fetchRecordingById(id: string): Promise<Recording | null> {
+  const { data, error } = await supabase.from("recordings").select("*").eq("id", id).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export function useRecording(id: string) {
+  return useQuery({
+    queryKey: recordingKeys.detail(id),
+    queryFn: () => fetchRecordingById(id),
+  });
+}
+
+async function fetchTeacherRecordings(teacherId: string): Promise<RecordingWithStudent[]> {
+  const { data: classes, error: clsErr } = await supabase
+    .from("classes")
+    .select("id")
+    .eq("teacher_id", teacherId);
+  if (clsErr) throw clsErr;
+  const ids = (classes ?? []).map((c) => c.id);
+  if (ids.length === 0) return [];
+
+  const { data, error } = await supabase
+    .from("recordings")
+    .select("*, student:profiles(full_name)")
+    .in("class_id", ids)
+    .order("created_at", { ascending: false })
+    .returns<RecordingWithStudent[]>();
+  if (error) throw error;
+  return data ?? [];
+}
+
+export function useTeacherRecordings(teacherId: string) {
+  return useQuery({
+    queryKey: recordingKeys.teacher(teacherId),
+    queryFn: () => fetchTeacherRecordings(teacherId),
+  });
+}
+
+async function fetchSignedAudioUrl(path: string): Promise<string> {
+  const { data, error } = await supabase.storage.from("recordings").createSignedUrl(path, 3600);
+  if (error) throw error;
+  return data.signedUrl;
+}
+
+export function useSignedAudioUrl(path: string | undefined) {
+  return useQuery({
+    queryKey: recordingKeys.signedUrl(path ?? "none"),
+    queryFn: () => fetchSignedAudioUrl(path as string),
+    enabled: Boolean(path),
+    staleTime: 50 * 60 * 1000,
+  });
+}
+
+/** Set a recording's status (e.g. pending → in_review on first annotation). */
+export function useSetRecordingStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      status,
+      reviewedAt,
+    }: {
+      id: string;
+      status: RecordingStatus;
+      reviewedAt?: string | null;
+    }): Promise<void> => {
+      const patch: { status: RecordingStatus; reviewed_at?: string | null } = { status };
+      if (reviewedAt !== undefined) patch.reviewed_at = reviewedAt;
+      const { error } = await supabase.from("recordings").update(patch).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: recordingKeys.detail(vars.id) });
+      qc.invalidateQueries({ queryKey: ["recordings"] });
+    },
   });
 }
 

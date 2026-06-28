@@ -6,3 +6,5 @@ export { Badge } from "./Badge";
 export type { BadgeStatus } from "./Badge";
 export { TextField } from "./TextField";
 export { TagChip } from "./TagChip";
+export { Player } from "./Player";
+export type { PlayerMarker } from "./Player";
