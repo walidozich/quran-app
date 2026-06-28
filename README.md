@@ -2,7 +2,7 @@
 
 An Arabic, right-to-left mobile app where **students record Quran recitations** and **teachers review them with timestamped annotations** — pinning a voice correction, a text comment, and tags to the exact moment of each mistake. Students consume feedback in context, filter their mistakes by tag to study weaknesses, and respond with new attempts that form a review thread.
 
-> **Status:** Phase 7 complete — "study by tag": students pick a mistake tag and see every matching annotation across all their reviewed recordings, each deep-linking to that moment in the recording. Best tested on a physical device. Needs a Supabase project + `.env` (see setup below). See `todo.md`.
+> **Status:** Phase 8 complete — attempt threads: a student records a new attempt in response to a reviewed recording, and both roles see the chain as a grouped timeline (newest activity first). Core feature set is done; remaining: auth (Phase 9) and the APK build (Phase 10). Best tested on a physical device. Needs a Supabase project + `.env` (see setup below). See `todo.md`.
 
 ## Tech stack
 - **Expo (React Native)** + **TypeScript**, **Expo Router** (file-based routing)

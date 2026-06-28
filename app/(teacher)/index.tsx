@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, View } from "react-native";
 import { AppText, Badge, Button, Card, Screen } from "../../src/components";
 import { BadgeStatus } from "../../src/components/Badge";
 import { useTeacherRecordings } from "../../src/features/recordings/api";
+import { buildThreads } from "../../src/features/recordings/threads";
 import { useSession } from "../../src/features/session/DevSessionProvider";
 import { RoleSwitcher } from "../../src/features/session/RoleSwitcher";
 import { t } from "../../src/i18n/ar";
@@ -33,17 +34,18 @@ export default function TeacherHome() {
       {isLoading ? (
         <ActivityIndicator color={colors.primary} />
       ) : recordings && recordings.length > 0 ? (
-        recordings.map((rec) => {
-          const badge = teacherBadge(rec.status);
+        buildThreads(recordings).map((thread) => {
+          const badge = teacherBadge(thread.latest.status);
           return (
-            <Pressable key={rec.id} onPress={() => router.push(`/(teacher)/review/${rec.id}`)}>
+            <Pressable key={thread.rootId} onPress={() => router.push(`/(teacher)/thread/${thread.rootId}`)}>
               <Card>
                 <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                  <AppText variant="heading">{rec.label}</AppText>
+                  <AppText variant="heading">{thread.label}</AppText>
                   <Badge label={badge.label} status={badge.status} />
                 </View>
                 <AppText variant="caption" color={colors.textMuted}>
-                  {t("teacherHome.by")}: {rec.student.full_name}
+                  {t("teacherHome.by")}: {thread.latest.student.full_name} · {thread.attempts.length}{" "}
+                  {t("thread.attemptsCount")}
                 </AppText>
               </Card>
             </Pressable>

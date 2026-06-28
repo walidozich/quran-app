@@ -89,6 +89,13 @@ export const ar = {
     noRecordings: "لا توجد تسجيلات بعد",
     studyByTag: "ادرس حسب الوسم",
   },
+  thread: {
+    title: "سلسلة المحاولات",
+    attempt: "المحاولة",
+    attemptsCount: "محاولات",
+    newAttempt: "محاولة جديدة",
+    openReview: "فتح المراجعة",
+  },
   study: {
     title: "ادرس حسب الوسم",
     pickTag: "اختر وسمًا لعرض كل الملاحظات المرتبطة به عبر تسجيلاتك",

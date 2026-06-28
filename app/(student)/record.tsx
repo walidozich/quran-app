@@ -5,7 +5,7 @@ import {
   useAudioRecorder,
   useAudioRecorderState,
 } from "expo-audio";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { View } from "react-native";
 import { AppText, Button, Card, Screen, TextField } from "../../src/components";
@@ -18,6 +18,10 @@ import { colors, spacing } from "../../src/theme";
 
 export default function RecordScreen() {
   const router = useRouter();
+  const { respondsTo, label: inheritedLabel } = useLocalSearchParams<{
+    respondsTo?: string;
+    label?: string;
+  }>();
   const { currentProfile } = useSession();
   const { data: studentClass } = useStudentClass(currentProfile.id);
 
@@ -26,7 +30,7 @@ export default function RecordScreen() {
 
   const [recordedUri, setRecordedUri] = useState<string | null>(null);
   const [durationMs, setDurationMs] = useState(0);
-  const [label, setLabel] = useState("");
+  const [label, setLabel] = useState(inheritedLabel ?? "");
   const [error, setError] = useState<string | null>(null);
 
   const source = useMemo(() => (recordedUri ? { uri: recordedUri } : null), [recordedUri]);
@@ -72,7 +76,13 @@ export default function RecordScreen() {
     if (!studentClass || !recordedUri) return;
     setError(null);
     createRecording.mutate(
-      { classId: studentClass.id, label: label.trim(), localUri: recordedUri, durationMs },
+      {
+        classId: studentClass.id,
+        label: label.trim(),
+        localUri: recordedUri,
+        durationMs,
+        respondsToId: respondsTo ?? null,
+      },
       {
         onSuccess: () => router.back(),
         onError: () => setError(t("record.uploadError")),
