@@ -2,7 +2,7 @@
 
 An Arabic, right-to-left mobile app where **students record Quran recitations** and **teachers review them with timestamped annotations** — pinning a voice correction, a text comment, and tags to the exact moment of each mistake. Students consume feedback in context, filter their mistakes by tag to study weaknesses, and respond with new attempts that form a review thread.
 
-> **Status:** Phase 3 complete — classes & join codes. Teachers create classes (with a `QRN-XXXX` join code) and see members; students join by code. Role-based routing via `(teacher)`/`(student)` route groups. Needs a Supabase project + `.env` to run (see setup below). See `todo.md`.
+> **Status:** Phase 4 complete — students record recitations (expo-audio, m4a), preview, label, and upload to Supabase Storage; recordings list on the student dashboard with status badges. Best tested on a physical device (microphone). Needs a Supabase project + `.env` (see setup below). See `todo.md`.
 
 ## Tech stack
 - **Expo (React Native)** + **TypeScript**, **Expo Router** (file-based routing)
