@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, Pressable, View } from "react-native";
 import { AppText, Badge, Button, Card, Screen } from "../../src/components";
 import { BadgeStatus } from "../../src/components/Badge";
 import { useStudentClass } from "../../src/features/classes/api";
@@ -55,12 +55,14 @@ export default function StudentHome() {
         recordings.map((rec) => {
           const badge = studentBadge(rec.status);
           return (
-            <Card key={rec.id}>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                <AppText variant="heading">{rec.label}</AppText>
-                <Badge label={badge.label} status={badge.status} />
-              </View>
-            </Card>
+            <Pressable key={rec.id} onPress={() => router.push(`/(student)/recording/${rec.id}`)}>
+              <Card>
+                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                  <AppText variant="heading">{rec.label}</AppText>
+                  <Badge label={badge.label} status={badge.status} />
+                </View>
+              </Card>
+            </Pressable>
           );
         })
       ) : (

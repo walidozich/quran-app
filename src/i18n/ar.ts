@@ -88,6 +88,12 @@ export const ar = {
     myRecordings: "تسجيلاتي",
     noRecordings: "لا توجد تسجيلات بعد",
   },
+  studentReview: {
+    pending: "التسجيل قيد المراجعة — ستظهر ملاحظات المعلّم بعد إتمام المراجعة",
+    annotations: "ملاحظات المعلّم",
+    filterAll: "الكل",
+    noAnnotations: "لا توجد ملاحظات على هذا التسجيل",
+  },
   record: {
     title: "تسجيل تلاوة",
     start: "بدء التسجيل",
