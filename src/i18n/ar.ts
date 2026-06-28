@@ -1,0 +1,71 @@
+// All user-facing copy lives here. Never hardcode Arabic text in components.
+export const ar = {
+  app: {
+    name: "منصة تعليم القرآن",
+  },
+  common: {
+    save: "حفظ",
+    cancel: "إلغاء",
+    submit: "إرسال",
+    delete: "حذف",
+    edit: "تعديل",
+    loading: "جارٍ التحميل…",
+    retry: "إعادة المحاولة",
+  },
+  status: {
+    pending: "قيد المراجعة",
+    draft: "مسودة",
+    reviewed: "تمت المراجعة",
+  },
+  roles: {
+    teacher: "معلّم",
+    student: "طالب",
+  },
+  home: {
+    welcome: "مرحبًا بك",
+    tagline: "سجّل تلاوتك، واحصل على ملاحظات معلّمك",
+  },
+  demo: {
+    componentsTitle: "مكوّنات الواجهة",
+    primaryButton: "تسجيل جديد",
+    secondaryButton: "انضمام لصف",
+    fieldLabel: "اسم المقطع",
+    fieldPlaceholder: "مثال: سورة الفاتحة",
+    cardTitle: "سورة الفاتحة",
+    cardBody: "ثلاث محاولات — آخر حالة: تمت المراجعة",
+    tagsTitle: "وسوم الأخطاء الشائعة",
+  },
+  tags: {
+    madd: "مدّ",
+    ghunnah: "غُنّة",
+    qalqalah: "قلقلة",
+    idgham: "إدغام",
+    ikhfa: "إخفاء",
+    izhar: "إظهار",
+    makhraj: "مخرج الحرف",
+    missingWord: "كلمة ناقصة",
+    extraWord: "كلمة زائدة",
+    waqf: "وقف وابتداء",
+    tashkeel: "تشكيل",
+  },
+} as const;
+
+type Primitive = string;
+type Nested = { [key: string]: Primitive | Nested };
+
+/**
+ * Resolve a dot-path key against the ar dictionary, e.g. t("status.pending").
+ * Returns the key itself if not found (so missing strings are visible, not crashing).
+ */
+export function t(path: string): string {
+  const parts = path.split(".");
+  let node: Primitive | Nested = ar as Nested;
+  for (const part of parts) {
+    if (typeof node === "object" && node !== null && part in node) {
+      node = (node as Nested)[part];
+    } else {
+      return path;
+    }
+  }
+  return typeof node === "string" ? node : path;
+}
