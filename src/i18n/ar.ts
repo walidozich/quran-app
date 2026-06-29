@@ -83,6 +83,8 @@ export const ar = {
     rangeHint: "حدّد مقطعًا (اختياري) ثم أضف ملاحظة",
     edit: "تعديل",
     delete: "حذف",
+    submittedAt: "وقت الإرسال",
+    reviewedAt: "وقت المراجعة",
     goTo: "▶ استمع من هنا",
     playCorrection: "تشغيل التصحيح الصوتي",
     voiceCorrection: "تصحيح صوتي",

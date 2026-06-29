@@ -20,6 +20,7 @@ import {
 import { useSession } from "../../../src/features/session/auth";
 import { useCreateTag, useTags } from "../../../src/features/tags/useTags";
 import { t } from "../../../src/i18n/ar";
+import { formatDateTime } from "../../../src/lib/datetime";
 import { spacing, useColors } from "../../../src/theme";
 
 export default function ReviewScreen() {
@@ -125,6 +126,17 @@ export default function ReviewScreen() {
   return (
     <Screen scroll>
       <ScreenHeader title={recording.label} />
+
+      <View style={{ gap: 2, marginBottom: spacing.sm }}>
+        <AppText variant="caption" color={colors.textMuted} style={{ writingDirection: "ltr" }}>
+          {t("review.submittedAt")}: {formatDateTime(recording.created_at)}
+        </AppText>
+        {isReviewed && recording.reviewed_at ? (
+          <AppText variant="caption" color={colors.textMuted} style={{ writingDirection: "ltr" }}>
+            {t("review.reviewedAt")}: {formatDateTime(recording.reviewed_at)}
+          </AppText>
+        ) : null}
+      </View>
 
       <Card>
         {audioUrl ? (

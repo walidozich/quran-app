@@ -3,6 +3,7 @@ import { ActivityIndicator, View } from "react-native";
 import { AppText, Card, Player, TagChip } from "../../components";
 import { PlayerMarker } from "../../components/Player";
 import { t } from "../../i18n/ar";
+import { formatDateTime } from "../../lib/datetime";
 import { spacing, useColors } from "../../theme";
 import { Tag } from "../../types/database";
 import { AnnotationCard } from "../annotations/AnnotationCard";
@@ -68,6 +69,16 @@ export function RecordingReviewPanel({ recordingId, initialSeekMs = null }: Prop
         ) : (
           <ActivityIndicator color={colors.primary} />
         )}
+        <View style={{ marginTop: spacing.sm, gap: 2 }}>
+          <AppText variant="caption" color={colors.textMuted} style={{ writingDirection: "ltr" }}>
+            {t("review.submittedAt")}: {formatDateTime(recording.created_at)}
+          </AppText>
+          {isReviewed && recording.reviewed_at ? (
+            <AppText variant="caption" color={colors.textMuted} style={{ writingDirection: "ltr" }}>
+              {t("review.reviewedAt")}: {formatDateTime(recording.reviewed_at)}
+            </AppText>
+          ) : null}
+        </View>
       </Card>
 
       {!isReviewed ? (
