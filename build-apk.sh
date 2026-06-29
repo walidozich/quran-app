@@ -34,6 +34,13 @@ if [ -f .env ]; then
   echo "▶ Backend (.env): $(grep -E '^EXPO_PUBLIC_SUPABASE_URL' .env | head -1 || echo '(none)')"
 fi
 
+# Re-sync the native project from app.json (plugins, name, google-services, sounds).
+# Plain prebuild (merge) is fast (~20-40s) and keeps the Gradle/native cache, so
+# it's safe to run every build. (Do NOT use --clean here: that wipes android/ and
+# forces a ~15-min native recompile. Run it manually only if things get out of sync.)
+echo "▶ Syncing native project (expo prebuild)…"
+npx expo prebuild -p android --no-install
+
 # Gradle does NOT treat .env as a build input, so an incremental build can ship a
 # stale JS bundle (wrong Supabase URL). Force a fresh bundle every time by clearing
 # the bundle/asset/apk outputs. (We avoid `gradlew clean` — its native CMake clean
