@@ -8,6 +8,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { Modal, ScrollView, StyleSheet, View } from "react-native";
 import { AppText, Button, Card, TagChip, TextField } from "../../components";
+import { MAX_CORRECTION_MS } from "../../config/recording";
 import { t } from "../../i18n/ar";
 import { ensureRecordingReady, formatMillis, setPlaybackMode } from "../../lib/audio";
 import { ColorScheme, spacing, useColors } from "../../theme";
@@ -95,6 +96,13 @@ export function AnnotationEditor({
     }
   };
 
+  // Auto-stop the voice correction at the length cap.
+  useEffect(() => {
+    if (recorderState.isRecording && recorderState.durationMillis >= MAX_CORRECTION_MS) {
+      stopVoice();
+    }
+  }, [recorderState.isRecording, recorderState.durationMillis]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const addCustomTag = async () => {
     const name = newTag.trim();
     if (!name) return;
@@ -144,6 +152,9 @@ export function AnnotationEditor({
                     <AppText color={colors.danger}>{t("editor.voiceRecording")}</AppText>
                     <AppText variant="heading" style={{ writingDirection: "ltr", textAlign: "center" }}>
                       {formatMillis(recorderState.durationMillis)}
+                    </AppText>
+                    <AppText variant="caption" color={colors.textMuted} style={{ textAlign: "center" }}>
+                      {t("editor.cap")}
                     </AppText>
                     <Button label={t("editor.stopVoice")} variant="secondary" onPress={stopVoice} />
                   </>

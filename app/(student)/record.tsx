@@ -6,9 +6,10 @@ import {
   useAudioRecorderState,
 } from "expo-audio";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { View } from "react-native";
 import { AppText, Button, Card, Screen, ScreenHeader, TextField } from "../../src/components";
+import { MAX_RECITATION_MS } from "../../src/config/recording";
 import { useStudentClasses } from "../../src/features/classes/api";
 import { useCreateRecording } from "../../src/features/recordings/api";
 import { useSession } from "../../src/features/session/auth";
@@ -60,6 +61,13 @@ export default function RecordScreen() {
     setRecordedUri(recorder.uri ?? null);
     await setPlaybackMode();
   };
+
+  // Auto-stop at the length cap so uploads stay reasonable.
+  useEffect(() => {
+    if (recorderState.isRecording && recorderState.durationMillis >= MAX_RECITATION_MS) {
+      stopRecording();
+    }
+  }, [recorderState.isRecording, recorderState.durationMillis]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const reRecord = () => {
     if (playerStatus.playing) player.pause();
@@ -120,6 +128,9 @@ export default function RecordScreen() {
             </AppText>
             <AppText variant="title" style={{ writingDirection: "ltr", textAlign: "center" }}>
               {formatMillis(recorderState.durationMillis)}
+            </AppText>
+            <AppText variant="caption" color={colors.textMuted} style={{ textAlign: "center" }}>
+              {t("record.cap")}
             </AppText>
             <Button label={t("record.stop")} variant="secondary" onPress={stopRecording} />
           </>

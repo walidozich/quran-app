@@ -190,7 +190,11 @@ In the default Supabase mode the data lives on a shared server, so anything that
 ## Design & branding
 Visual identity drawn from the *mushaf* (illuminated manuscript): **deep emerald** (`#0E5E4E`), **warm gold** (`#C9A227`), parchment background, **Tajawal** Arabic type. The signature element is a thin gold rule with a centered diamond (a nod to mushaf section borders) under every screen header. Launch shows an emerald **brand splash** (`BrandSplash`) with the logo, then a branded sign-in hero (`AuthHero`). Every screen header (`ScreenHeader`) carries a back arrow (RTL → points right) and the reload button.
 
-**Logo:** the app renders `assets/logo.svg` as a component (via `react-native-svg-transformer`). A placeholder rub-el-hizb is committed; replace `assets/logo.svg` with your own (same path + name) and restart Metro with cache clear (`./dev.sh --lan -c`). For the native app icon, replace `assets/icon.png` (1024×1024 PNG).
+**Logo & icon:** the app renders `assets/logo.svg` as a component (via `react-native-svg-transformer`). The native **app icon, adaptive foreground, and splash image are generated from `logo.svg`** (emerald `#01443A` background). To regenerate after changing the logo: `magick -background none -density 384 assets/logo.svg -resize 1024x1024 assets/icon.png` (and the padded `android-icon-foreground.png` / `splash-icon.png`). Restart Metro with cache clear (`./dev.sh --lan -c`).
+
+**Empty & error states:** lists use shared `EmptyState` / `ErrorState` components; on a failed fetch the screen shows a retry button (`refetch`) instead of a blank spinner.
+
+**Recording caps:** recitations auto-stop at **5 min**, voice corrections at **2 min** (`src/config/recording.ts`).
 
 **Light / dark theme:** two palettes (`src/theme/colors.ts`) provided via `ThemeProvider`; components read the active palette through the `useColors()` hook (never the static `colors` import). The mode persists in AsyncStorage and is toggled from the drawer. The status bar follows the theme.
 
