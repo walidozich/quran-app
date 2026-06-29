@@ -18,6 +18,7 @@ yarn-error.*
 .env
 .env.*
 !.env.example
+.mcp.json
 
 # Native build artifacts
 android/
