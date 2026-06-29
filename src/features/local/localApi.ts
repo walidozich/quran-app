@@ -150,6 +150,13 @@ export async function localInsertRecording(input: {
   audioPath: string;
   durationMs: number;
   respondsToId: string | null;
+  refType?: Recording["ref_type"] | null;
+  surahStart?: number | null;
+  ayahStart?: number | null;
+  surahEnd?: number | null;
+  ayahEnd?: number | null;
+  pageStart?: number | null;
+  pageEnd?: number | null;
 }): Promise<Recording> {
   const rec: Recording = {
     id: uid(),
@@ -162,6 +169,13 @@ export async function localInsertRecording(input: {
     status: "pending",
     reviewed_at: null,
     created_at: nowIso(),
+    ref_type: input.refType ?? null,
+    surah_start: input.surahStart ?? null,
+    ayah_start: input.ayahStart ?? null,
+    surah_end: input.surahEnd ?? null,
+    ayah_end: input.ayahEnd ?? null,
+    page_start: input.pageStart ?? null,
+    page_end: input.pageEnd ?? null,
   };
   await mutate((db) => db.recordings.push(rec));
   return rec;

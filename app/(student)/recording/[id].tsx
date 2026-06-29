@@ -5,6 +5,7 @@ import { useRecording } from "../../../src/features/recordings/api";
 import { RecordingReviewPanel } from "../../../src/features/recordings/RecordingReviewPanel";
 import { t } from "../../../src/i18n/ar";
 import { spacing, useColors } from "../../../src/theme";
+import type { Recording } from "../../../src/types/database";
 
 export default function StudentRecordingView() {
   const router = useRouter();
@@ -30,14 +31,29 @@ export default function StudentRecordingView() {
       {recording.status === "reviewed" ? (
         <Button
           label={t("thread.newAttempt")}
-          onPress={() =>
-            router.push(
-              `/(student)/record?respondsTo=${recording.id}&label=${encodeURIComponent(recording.label)}`
-            )
-          }
+          onPress={() => router.push(recordAttemptUrl(recording))}
           style={{ marginTop: spacing.md }}
         />
       ) : null}
     </Screen>
   );
+}
+
+function recordAttemptUrl(recording: Recording): string {
+  const params = new URLSearchParams({
+    respondsTo: recording.id,
+    label: recording.label,
+    classId: recording.class_id,
+  });
+  appendReferenceParams(params, recording);
+  return `/(student)/record?${params.toString()}`;
+}
+
+function appendReferenceParams(params: URLSearchParams, recording: Recording) {
+  if (!recording.ref_type) return;
+  params.set("ref_type", recording.ref_type);
+  for (const key of ["surah_start", "ayah_start", "surah_end", "ayah_end", "page_start", "page_end"] as const) {
+    const value = recording[key];
+    if (value != null) params.set(key, String(value));
+  }
 }

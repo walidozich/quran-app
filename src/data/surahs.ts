@@ -118,19 +118,32 @@ export const SURAHS: Surah[] = [
   { number: 114, name: "الناس", ayahs: 6 },
 ];
 
-const AR_DIGITS = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
+/** Total pages in the standard Madani mushaf. */
+export const QURAN_PAGES = 604;
 
-/** Parse a count from a string that may contain Arabic-Indic digits. */
-export function parseDigits(s: string): number {
-  const western = s.replace(/[٠-٩]/g, (d) => String(AR_DIGITS.indexOf(d)));
-  return parseInt(western, 10);
+/**
+ * Build a recording label from an ayah selection. Supports a single ayah, a
+ * range within one surah, and a range that spans surahs. Latin numerals.
+ *   "سورة البقرة 5"               (single)
+ *   "سورة البقرة 5–10"            (range, same surah)
+ *   "سورة البقرة 280 – آل عمران 5" (range, cross surah)
+ */
+export function ayahRangeLabel(
+  start: Surah,
+  startAyah: number,
+  endSurah?: Surah | null,
+  endAyah?: number | null
+): string {
+  const startPart = `سورة ${start.name} ${startAyah}`;
+  if (!endSurah || endAyah == null) return startPart;
+  if (endSurah.number === start.number) {
+    return endAyah > startAyah ? `سورة ${start.name} ${startAyah}–${endAyah}` : startPart;
+  }
+  return `${startPart} – سورة ${endSurah.name} ${endAyah}`;
 }
 
-/** Build a recording label from a surah + optional ayah range, e.g. "سورة البقرة 1–5". */
-export function ayahLabel(surah: Surah, from?: number | null, to?: number | null): string {
-  const base = `سورة ${surah.name}`;
-  if (from && to && from > 0 && to > 0) {
-    return from === to ? `${base} ${from}` : `${base} ${from}–${to}`;
-  }
-  return base;
+/** Build a recording label from a page selection (single page or a range). */
+export function pageRangeLabel(start: number, end?: number | null): string {
+  if (end == null || end <= start) return `صفحة ${start}`;
+  return `صفحة ${start}–${end}`;
 }

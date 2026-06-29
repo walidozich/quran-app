@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { StyleSheet, View } from "react-native";
 import Svg, { Circle, G } from "react-native-svg";
-import { TagCount } from "../features/stats/aggregate";
+import type { MetricCount, TagCount } from "../features/stats/aggregate";
 import { ColorScheme, radius, spacing, useColors } from "../theme";
 import { AppText } from "./AppText";
 
@@ -26,6 +26,10 @@ export function StatTile({ value, label, tone = "primary" }: { value: number | s
 
 // --- Horizontal bar list (e.g. most-common mistakes) -----------------------
 export function BarList({ items, emptyText }: { items: TagCount[]; emptyText: string }) {
+  return <GenericBarList items={items} emptyText={emptyText} />;
+}
+
+export function GenericBarList({ items, emptyText }: { items: MetricCount[]; emptyText: string }) {
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   if (items.length === 0) {
@@ -45,7 +49,10 @@ export function BarList({ items, emptyText }: { items: TagCount[]; emptyText: st
           <View style={styles.barTrack}>
             {/* RTL: bar grows from the right edge. */}
             <View
-              style={[styles.barFill, { width: `${(it.count / max) * 100}%`, backgroundColor: it.color }]}
+              style={[
+                styles.barFill,
+                { width: `${(it.count / max) * 100}%`, backgroundColor: it.color ?? colors.primary },
+              ]}
             />
           </View>
         </View>

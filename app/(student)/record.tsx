@@ -8,7 +8,17 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { View } from "react-native";
-import { AppText, AyahPicker, Button, Card, RecordingOrb, Screen, ScreenHeader, TextField } from "../../src/components";
+import {
+  AppText,
+  AyahPicker,
+  Button,
+  Card,
+  RecordingOrb,
+  Screen,
+  ScreenHeader,
+  TextField,
+} from "../../src/components";
+import type { PickedQuranReference } from "../../src/components";
 import { MAX_RECITATION_MS } from "../../src/config/recording";
 import { useStudentClasses } from "../../src/features/classes/api";
 import { useCreateRecording } from "../../src/features/recordings/api";
@@ -16,13 +26,32 @@ import { useSession } from "../../src/features/session/auth";
 import { t } from "../../src/i18n/ar";
 import { ensureRecordingReady, formatMillis, setPlaybackMode } from "../../src/lib/audio";
 import { spacing, useColors } from "../../src/theme";
+import type { RecordingRefType } from "../../src/types/database";
 
 export default function RecordScreen() {
   const router = useRouter();
-  const { respondsTo, label: inheritedLabel, classId } = useLocalSearchParams<{
+  const {
+    respondsTo,
+    label: inheritedLabel,
+    classId,
+    ref_type,
+    surah_start,
+    ayah_start,
+    surah_end,
+    ayah_end,
+    page_start,
+    page_end,
+  } = useLocalSearchParams<{
     respondsTo?: string;
     label?: string;
     classId?: string;
+    ref_type?: RecordingRefType;
+    surah_start?: string;
+    ayah_start?: string;
+    surah_end?: string;
+    ayah_end?: string;
+    page_start?: string;
+    page_end?: string;
   }>();
   const colors = useColors();
   const { currentProfile } = useSession();
@@ -36,6 +65,18 @@ export default function RecordScreen() {
   const [recordedUri, setRecordedUri] = useState<string | null>(null);
   const [durationMs, setDurationMs] = useState(0);
   const [label, setLabel] = useState(inheritedLabel ?? "");
+  const [quranReference, setQuranReference] = useState<PickedQuranReference | null>(() =>
+    referenceFromParams({
+      label: inheritedLabel,
+      ref_type,
+      surah_start,
+      ayah_start,
+      surah_end,
+      ayah_end,
+      page_start,
+      page_end,
+    })
+  );
   const [pickerVisible, setPickerVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -95,6 +136,13 @@ export default function RecordScreen() {
         localUri: recordedUri,
         durationMs,
         respondsToId: respondsTo ?? null,
+        ref_type: quranReference?.ref_type ?? null,
+        surah_start: quranReference?.surah_start ?? null,
+        ayah_start: quranReference?.ayah_start ?? null,
+        surah_end: quranReference?.surah_end ?? null,
+        ayah_end: quranReference?.ayah_end ?? null,
+        page_start: quranReference?.page_start ?? null,
+        page_end: quranReference?.page_end ?? null,
       },
       {
         onSuccess: () => router.back(),
@@ -161,7 +209,10 @@ export default function RecordScreen() {
           <TextField
             label={t("record.labelLabel")}
             value={label}
-            onChangeText={setLabel}
+            onChangeText={(text) => {
+              setLabel(text);
+              setQuranReference(null);
+            }}
             placeholder={t("record.labelPlaceholder")}
           />
           <Button label={t("ayah.pick")} variant="secondary" onPress={() => setPickerVisible(true)} />
@@ -177,7 +228,10 @@ export default function RecordScreen() {
       <AyahPicker
         visible={pickerVisible}
         onClose={() => setPickerVisible(false)}
-        onPick={(picked) => setLabel(picked)}
+        onPick={(picked) => {
+          setLabel(picked.label);
+          setQuranReference(picked);
+        }}
       />
 
       {error ? (
@@ -187,4 +241,54 @@ export default function RecordScreen() {
       ) : null}
     </Screen>
   );
+}
+
+function parseParamNumber(value: string | undefined): number | null {
+  if (value == null || value === "") return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function referenceFromParams(params: {
+  label?: string;
+  ref_type?: RecordingRefType;
+  surah_start?: string;
+  ayah_start?: string;
+  surah_end?: string;
+  ayah_end?: string;
+  page_start?: string;
+  page_end?: string;
+}): PickedQuranReference | null {
+  if (!params.label || !params.ref_type) return null;
+  if (params.ref_type === "ayah") {
+    const surahStart = parseParamNumber(params.surah_start);
+    const ayahStart = parseParamNumber(params.ayah_start);
+    const surahEnd = parseParamNumber(params.surah_end);
+    const ayahEnd = parseParamNumber(params.ayah_end);
+    if (surahStart == null || ayahStart == null || surahEnd == null || ayahEnd == null) return null;
+    return {
+      label: params.label,
+      ref_type: "ayah",
+      surah_start: surahStart,
+      ayah_start: ayahStart,
+      surah_end: surahEnd,
+      ayah_end: ayahEnd,
+      page_start: null,
+      page_end: null,
+    };
+  }
+
+  const pageStart = parseParamNumber(params.page_start);
+  const pageEnd = parseParamNumber(params.page_end);
+  if (pageStart == null || pageEnd == null) return null;
+  return {
+    label: params.label,
+    ref_type: "page",
+    surah_start: null,
+    ayah_start: null,
+    surah_end: null,
+    ayah_end: null,
+    page_start: pageStart,
+    page_end: pageEnd,
+  };
 }

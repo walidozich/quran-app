@@ -7,7 +7,7 @@ import { RecordingReviewPanel } from "../../../src/features/recordings/Recording
 import { buildThreads } from "../../../src/features/recordings/threads";
 import { useSession } from "../../../src/features/session/auth";
 import { t } from "../../../src/i18n/ar";
-import { RecordingStatus } from "../../../src/types/database";
+import type { Recording, RecordingStatus } from "../../../src/types/database";
 import { spacing, useColors } from "../../../src/theme";
 
 function badgeFor(status: RecordingStatus): { status: BadgeStatus; label: string } {
@@ -63,13 +63,28 @@ export default function StudentThread() {
       {latest.status === "reviewed" ? (
         <Button
           label={t("thread.newAttempt")}
-          onPress={() =>
-            router.push(
-              `/(student)/record?respondsTo=${latest.id}&label=${encodeURIComponent(thread.label)}&classId=${latest.class_id}`
-            )
-          }
+          onPress={() => router.push(recordAttemptUrl(latest, thread.label))}
         />
       ) : null}
     </Screen>
   );
+}
+
+function recordAttemptUrl(recording: Recording, label: string): string {
+  const params = new URLSearchParams({
+    respondsTo: recording.id,
+    label,
+    classId: recording.class_id,
+  });
+  appendReferenceParams(params, recording);
+  return `/(student)/record?${params.toString()}`;
+}
+
+function appendReferenceParams(params: URLSearchParams, recording: Recording) {
+  if (!recording.ref_type) return;
+  params.set("ref_type", recording.ref_type);
+  for (const key of ["surah_start", "ayah_start", "surah_end", "ayah_end", "page_start", "page_end"] as const) {
+    const value = recording[key];
+    if (value != null) params.set(key, String(value));
+  }
 }

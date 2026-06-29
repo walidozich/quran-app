@@ -5,6 +5,7 @@ import {
   Card,
   Donut,
   ErrorState,
+  GenericBarList,
   LegendDot,
   Screen,
   ScreenHeader,
@@ -14,7 +15,12 @@ import { useTeacherAnnotations } from "../../src/features/annotations/api";
 import { useTeacherClasses } from "../../src/features/classes/api";
 import { useTeacherRecordings } from "../../src/features/recordings/api";
 import { useSession } from "../../src/features/session/auth";
-import { statusCounts, tagFrequency } from "../../src/features/stats/aggregate";
+import {
+  mostRecitedSurahs,
+  statusCounts,
+  surahStruggleMap,
+  tagFrequency,
+} from "../../src/features/stats/aggregate";
 import { t } from "../../src/i18n/ar";
 import { spacing, useColors } from "../../src/theme";
 
@@ -28,6 +34,8 @@ export default function TeacherDashboard() {
   const recs = recordings ?? [];
   const sc = statusCounts(recs);
   const studentCount = new Set(recs.map((r) => r.student_id)).size;
+  const mostRecited = mostRecitedSurahs(recs).slice(0, 5);
+  const struggleMap = surahStruggleMap(annotations ?? [], recs).slice(0, 5);
   const topMistakes = tagFrequency(annotations ?? []).slice(0, 6);
 
   return (
@@ -63,6 +71,16 @@ export default function TeacherDashboard() {
               <LegendDot color={colors.statusDraft} label={`${t("dashboard.inReview")} (${sc.inReview})`} />
               <LegendDot color={colors.statusPending} label={`${t("dashboard.pending")} (${sc.pending})`} />
             </View>
+          </Card>
+
+          <Card>
+            <AppText variant="heading">{t("dashboard.classMostRecited")}</AppText>
+            <GenericBarList items={mostRecited} emptyText={t("dashboard.noLocationData")} />
+          </Card>
+
+          <Card>
+            <AppText variant="heading">{t("dashboard.struggleMap")}</AppText>
+            <GenericBarList items={struggleMap} emptyText={t("dashboard.noLocationData")} />
           </Card>
 
           <Card>

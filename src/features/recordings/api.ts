@@ -3,7 +3,7 @@ import { USE_LOCAL_BACKEND } from "../../config/backend";
 import { supabase } from "../../config/supabase";
 import { t } from "../../i18n/ar";
 import { uploadAudio } from "../../lib/audio";
-import { Recording, RecordingStatus } from "../../types/database";
+import { Recording, RecordingReference, RecordingStatus } from "../../types/database";
 import {
   localFetchRecordingById,
   localFetchStudentRecordings,
@@ -143,7 +143,7 @@ export type NewRecordingInput = {
   localUri: string;
   durationMs: number;
   respondsToId?: string | null;
-};
+} & Partial<RecordingReference>;
 
 export function useCreateRecording(studentId: string) {
   const qc = useQueryClient();
@@ -160,6 +160,13 @@ export function useCreateRecording(studentId: string) {
           audioPath: storedPath,
           durationMs: input.durationMs,
           respondsToId: input.respondsToId ?? null,
+          refType: input.ref_type ?? null,
+          surahStart: input.surah_start ?? null,
+          ayahStart: input.ayah_start ?? null,
+          surahEnd: input.surah_end ?? null,
+          ayahEnd: input.ayah_end ?? null,
+          pageStart: input.page_start ?? null,
+          pageEnd: input.page_end ?? null,
         });
       }
 
@@ -173,6 +180,13 @@ export function useCreateRecording(studentId: string) {
           duration_ms: Math.round(input.durationMs),
           responds_to_id: input.respondsToId ?? null,
           status: "pending",
+          ref_type: input.ref_type ?? null,
+          surah_start: input.surah_start ?? null,
+          ayah_start: input.ayah_start ?? null,
+          surah_end: input.surah_end ?? null,
+          ayah_end: input.ayah_end ?? null,
+          page_start: input.page_start ?? null,
+          page_end: input.page_end ?? null,
         })
         .select("*")
         .single();

@@ -30,6 +30,18 @@ export type ClassMember = {
   joined_at: string;
 };
 
+export type RecordingRefType = "ayah" | "page";
+
+export type RecordingReference = {
+  ref_type: RecordingRefType | null;
+  surah_start: number | null;
+  ayah_start: number | null;
+  surah_end: number | null;
+  ayah_end: number | null;
+  page_start: number | null;
+  page_end: number | null;
+};
+
 export type Recording = {
   id: string;
   class_id: string;
@@ -41,6 +53,14 @@ export type Recording = {
   status: RecordingStatus;
   reviewed_at: string | null;
   created_at: string;
+  // Structured Quran reference captured by the ayah picker (null for custom names).
+  ref_type?: RecordingRefType | null;
+  surah_start?: number | null;
+  ayah_start?: number | null;
+  surah_end?: number | null;
+  ayah_end?: number | null;
+  page_start?: number | null;
+  page_end?: number | null;
 };
 
 export type Annotation = {
@@ -98,6 +118,7 @@ export type Database = {
     Enums: {
       user_role: UserRole;
       recording_status: RecordingStatus;
+      recording_ref_type: RecordingRefType;
     };
   };
 };
