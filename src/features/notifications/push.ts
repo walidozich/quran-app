@@ -1,29 +1,37 @@
-import Constants from "expo-constants";
+import Constants, { ExecutionEnvironment } from "expo-constants";
 import * as Device from "expo-device";
-import * as Notifications from "expo-notifications";
 import { USE_LOCAL_BACKEND } from "../../config/backend";
 import { supabase } from "../../config/supabase";
 
-// Show notifications while the app is foregrounded too.
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+// Expo Go (SDK 53+) removed remote push; even *importing* expo-notifications there
+// logs warnings/errors. So we never touch the module in Expo Go and lazy-load it
+// only inside a real dev/standalone build.
+const IS_EXPO_GO =
+  Constants.appOwnership === "expo" ||
+  Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 
 const EXPO_PUSH_ENDPOINT = "https://exp.host/--/api/v2/push/send";
 
 /**
  * Ask for permission, get this device's Expo push token, and save it on the
- * user's profile. No-ops on the local backend, on simulators, in Expo Go (remote
- * push needs a dev/EAS build), or if permission is denied — always best-effort.
+ * user's profile. No-ops on the local backend, in Expo Go, on simulators, or
+ * without an EAS projectId — always best-effort.
  */
 export async function registerForPush(profileId: string): Promise<void> {
   try {
-    if (USE_LOCAL_BACKEND || !Device.isDevice) return;
+    if (USE_LOCAL_BACKEND || IS_EXPO_GO || !Device.isDevice) return;
+
+    // Lazy require so Expo Go never loads expo-notifications.
+    const Notifications = require("expo-notifications") as typeof import("expo-notifications");
+
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowBanner: true,
+        shouldShowList: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+      }),
+    });
 
     const { status: existing } = await Notifications.getPermissionsAsync();
     let status = existing;
