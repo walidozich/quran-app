@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { AppText, AuthHero, Button, Card, Screen, TextField } from "../../src/components";
-import { signInWithEmail, useAuth } from "../../src/features/session/auth";
+import { AuthTimeoutError, signInWithEmail, useAuth } from "../../src/features/session/auth";
 import { t } from "../../src/i18n/ar";
 import { spacing, useColors } from "../../src/theme";
 
@@ -21,8 +21,8 @@ export default function SignIn() {
       await signInWithEmail(email.trim(), password);
       await refreshProfile();
       router.replace("/");
-    } catch {
-      setError(t("auth.errorInvalid"));
+    } catch (e) {
+      setError(e instanceof AuthTimeoutError ? t("auth.errorConnection") : t("auth.errorInvalid"));
     } finally {
       setBusy(false);
     }

@@ -101,13 +101,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         clearTimeout(safety);
       });
 
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, s) => {
+    // IMPORTANT: keep this callback synchronous and never `await` another
+    // supabase call inside it — doing so holds the GoTrue lock and deadlocks
+    // auth operations in React Native (a later sign-in would hang forever).
+    // Defer the DB work onto a fresh tick so the lock is released first.
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
       setEmail(s?.user?.email ?? null);
-      if (s) {
-        await loadProfile(s.user.id);
+      if (!s) {
+        setProfile(null);
+        return;
+      }
+      setTimeout(() => {
+        if (!mounted) return;
+        loadProfile(s.user.id);
         registerForPush(s.user.id);
-      } else setProfile(null);
+      }, 0);
     });
 
     return () => {
@@ -183,12 +192,29 @@ export function useSession(): { currentProfile: Profile; role: UserRole } {
 }
 
 // --- auth actions ---------------------------------------------------------
+
+/** Thrown when an auth call doesn't settle in time (network/lock stall). */
+export class AuthTimeoutError extends Error {
+  constructor() {
+    super("auth-timeout");
+    this.name = "AuthTimeoutError";
+  }
+}
+
+/** Reject if the underlying promise hasn't settled in `ms` — no infinite spinners. */
+function withTimeout<T>(p: PromiseLike<T>, ms = 12000): Promise<T> {
+  return Promise.race([
+    Promise.resolve(p),
+    new Promise<T>((_, reject) => setTimeout(() => reject(new AuthTimeoutError()), ms)),
+  ]);
+}
+
 export async function signInWithEmail(email: string, password: string): Promise<void> {
   if (USE_LOCAL_BACKEND) {
     await signInLocal(email, password);
     return;
   }
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { error } = await withTimeout(supabase.auth.signInWithPassword({ email, password }));
   if (error) throw error;
 }
 
@@ -202,7 +228,7 @@ export async function signUpWithEmail(
     await signUpLocal(email, password, fullName, role);
     return;
   }
-  const { data, error } = await supabase.auth.signUp({ email, password });
+  const { data, error } = await withTimeout(supabase.auth.signUp({ email, password }));
   if (error) throw error;
   if (data.user) {
     const { error: pErr } = await supabase
