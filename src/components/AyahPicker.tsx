@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { FlatList, Modal, Pressable, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ayahLabel, parseDigits, Surah, SURAHS, toArabicDigits } from "../data/surahs";
+import { ayahLabel, parseDigits, Surah, SURAHS } from "../data/surahs";
 import { t } from "../i18n/ar";
 import { radius, spacing, useColors } from "../theme";
 import { AppText } from "./AppText";
@@ -67,10 +67,10 @@ export function AyahPicker({ visible, onClose, onPick }: Props) {
                       style={[styles.row, { borderBottomColor: colors.border }]}
                     >
                       <AppText>
-                        {toArabicDigits(item.number)}. {item.name}
+                        {item.number}. {item.name}
                       </AppText>
                       <AppText variant="caption" color={colors.textMuted}>
-                        {toArabicDigits(item.ayahs)}
+                        {item.ayahs}
                       </AppText>
                     </Pressable>
                   )}
@@ -81,7 +81,7 @@ export function AyahPicker({ visible, onClose, onPick }: Props) {
               <>
                 <AppText variant="heading">سورة {selected.name}</AppText>
                 <AppText variant="caption" color={colors.textMuted}>
-                  {t("ayah.wholeSurah")} — {toArabicDigits(selected.ayahs)}
+                  {t("ayah.wholeSurah")} — {selected.ayahs}
                 </AppText>
                 <View style={{ flexDirection: "row", gap: spacing.sm }}>
                   <View style={{ flex: 1 }}>

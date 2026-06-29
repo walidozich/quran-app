@@ -126,20 +126,11 @@ export function parseDigits(s: string): number {
   return parseInt(western, 10);
 }
 
-export function toArabicDigits(n: number): string {
-  return String(n)
-    .split("")
-    .map((c) => (c >= "0" && c <= "9" ? AR_DIGITS[Number(c)] : c))
-    .join("");
-}
-
-/** Build a recording label from a surah + optional ayah range, e.g. "سورة البقرة ١–٥". */
+/** Build a recording label from a surah + optional ayah range, e.g. "سورة البقرة 1–5". */
 export function ayahLabel(surah: Surah, from?: number | null, to?: number | null): string {
   const base = `سورة ${surah.name}`;
   if (from && to && from > 0 && to > 0) {
-    return from === to
-      ? `${base} ${toArabicDigits(from)}`
-      : `${base} ${toArabicDigits(from)}–${toArabicDigits(to)}`;
+    return from === to ? `${base} ${from}` : `${base} ${from}–${to}`;
   }
   return base;
 }
