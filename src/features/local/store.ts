@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   Annotation,
+  AnnotationReply,
   AnnotationTag,
   ClassMember,
   ClassRow,
@@ -15,6 +16,7 @@ export type LocalDB = {
   class_members: ClassMember[];
   recordings: Recording[];
   annotations: Annotation[];
+  annotation_replies: AnnotationReply[];
   tags: Tag[];
   annotation_tags: AnnotationTag[];
 };
@@ -50,6 +52,7 @@ function seed(): LocalDB {
     class_members: [],
     recordings: [],
     annotations: [],
+    annotation_replies: [],
     tags: SEED_TAGS.map((t) => ({
       id: uid(),
       name: t.name,
@@ -69,6 +72,8 @@ async function load(): Promise<LocalDB> {
   const raw = await AsyncStorage.getItem(DB_KEY);
   if (raw) {
     cache = JSON.parse(raw) as LocalDB;
+    // Migrate older stored DBs that predate newer collections.
+    if (!cache.annotation_replies) cache.annotation_replies = [];
   } else {
     cache = seed();
     await AsyncStorage.setItem(DB_KEY, JSON.stringify(cache));

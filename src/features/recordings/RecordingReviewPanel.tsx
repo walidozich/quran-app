@@ -7,6 +7,7 @@ import { spacing, useColors } from "../../theme";
 import { Tag } from "../../types/database";
 import { AnnotationCard } from "../annotations/AnnotationCard";
 import { useAnnotations } from "../annotations/api";
+import { useSession } from "../session/auth";
 import { useRecording, useSignedAudioUrl } from "./api";
 
 type Props = {
@@ -17,6 +18,7 @@ type Props = {
 /** Read-only student view of one recording: player + markers + filtered annotation list. */
 export function RecordingReviewPanel({ recordingId, initialSeekMs = null }: Props) {
   const colors = useColors();
+  const { currentProfile } = useSession();
   const { data: recording, isLoading } = useRecording(recordingId);
   const { data: audioUrl } = useSignedAudioUrl(recording?.audio_path);
   const isReviewed = recording?.status === "reviewed";
@@ -42,6 +44,7 @@ export function RecordingReviewPanel({ recordingId, initialSeekMs = null }: Prop
   const markers: PlayerMarker[] = filtered.map((a) => ({
     id: a.id,
     timestampMs: a.timestamp_ms,
+    endMs: a.end_ms,
     color: a.tags[0]?.color ?? colors.accent,
   }));
 
@@ -94,7 +97,14 @@ export function RecordingReviewPanel({ recordingId, initialSeekMs = null }: Prop
 
           {filtered.length > 0 ? (
             filtered.map((a) => (
-              <AnnotationCard key={a.id} annotation={a} onJump={(ms) => setSeekToMs(ms)} />
+              <AnnotationCard
+                key={a.id}
+                annotation={a}
+                onJump={(ms) => setSeekToMs(ms)}
+                showReplies
+                recordingId={recordingId}
+                currentUserId={currentProfile.id}
+              />
             ))
           ) : (
             <AppText color={colors.textMuted}>{t("studentReview.noAnnotations")}</AppText>

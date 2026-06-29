@@ -6,6 +6,7 @@ import { t } from "../../i18n/ar";
 import { formatMillis } from "../../lib/audio";
 import { spacing, useColors } from "../../theme";
 import { AnnotationWithTags, useCorrectionUrl } from "./api";
+import { RepliesSection } from "./RepliesSection";
 
 function VoiceCorrectionButton({ path }: { path: string }) {
   const { data: url } = useCorrectionUrl(path);
@@ -38,15 +39,32 @@ type Props = {
   editable?: boolean;
   onEdit?: () => void;
   onDelete?: () => void;
+  /** Show the per-annotation reply thread + resolve. */
+  showReplies?: boolean;
+  recordingId?: string;
+  currentUserId?: string;
+  canResolve?: boolean;
 };
 
-export function AnnotationCard({ annotation, onJump, editable, onEdit, onDelete }: Props) {
+export function AnnotationCard({
+  annotation,
+  onJump,
+  editable,
+  onEdit,
+  onDelete,
+  showReplies,
+  recordingId,
+  currentUserId,
+  canResolve,
+}: Props) {
   const colors = useColors();
+  const hasRange = annotation.end_ms != null && annotation.end_ms > annotation.timestamp_ms;
   return (
     <Card>
       <Pressable onPress={() => onJump?.(annotation.timestamp_ms)}>
         <AppText variant="subheading" color={colors.primary} style={{ writingDirection: "ltr" }}>
           ⏱ {formatMillis(annotation.timestamp_ms)}
+          {hasRange ? ` – ${formatMillis(annotation.end_ms as number)}` : ""}
         </AppText>
       </Pressable>
 
@@ -69,6 +87,16 @@ export function AnnotationCard({ annotation, onJump, editable, onEdit, onDelete 
           <Button label={t("review.edit")} variant="ghost" onPress={onEdit} style={{ flex: 1 }} />
           <Button label={t("review.delete")} variant="ghost" onPress={onDelete} style={{ flex: 1 }} />
         </View>
+      ) : null}
+
+      {showReplies && recordingId && currentUserId ? (
+        <RepliesSection
+          annotationId={annotation.id}
+          recordingId={recordingId}
+          resolved={Boolean(annotation.resolved)}
+          authorId={currentUserId}
+          canResolve={Boolean(canResolve)}
+        />
       ) : null}
     </Card>
   );

@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from "expo-router";
 import { useCallback, useRef, useState } from "react";
-import { ActivityIndicator, Alert, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, View } from "react-native";
 import { AppText, Button, Card, Player, Screen, ScreenHeader } from "../../../src/components";
 import { PlayerMarker } from "../../../src/components/Player";
 import { AnnotationCard } from "../../../src/features/annotations/AnnotationCard";
@@ -50,9 +50,33 @@ export default function ReviewScreen() {
   const [editorMode, setEditorMode] = useState<"create" | "edit">("create");
   const [editing, setEditing] = useState<AnnotationWithTags | null>(null);
   const [createTimestamp, setCreateTimestamp] = useState(0);
+  const [createEnd, setCreateEnd] = useState<number | null>(null);
+  // Optional range selection for the next note.
+  const [rangeStart, setRangeStart] = useState<number | null>(null);
+  const [rangeEnd, setRangeEnd] = useState<number | null>(null);
+
+  const markStart = () => {
+    const c = currentMsRef.current;
+    setRangeStart(c);
+    if (rangeEnd != null && rangeEnd <= c) setRangeEnd(null);
+  };
+  const markEnd = () => {
+    const c = currentMsRef.current;
+    if (rangeStart != null && c > rangeStart) setRangeEnd(c);
+  };
+  const clearRange = () => {
+    setRangeStart(null);
+    setRangeEnd(null);
+  };
 
   const openCreate = () => {
-    setCreateTimestamp(currentMsRef.current);
+    if (rangeStart != null) {
+      setCreateTimestamp(rangeStart);
+      setCreateEnd(rangeEnd != null && rangeEnd > rangeStart ? rangeEnd : null);
+    } else {
+      setCreateTimestamp(currentMsRef.current);
+      setCreateEnd(null);
+    }
     setPauseSignal((n) => n + 1); // auto-pause playback at the current moment
     setEditing(null);
     setEditorMode("create");
@@ -79,6 +103,7 @@ export default function ReviewScreen() {
   const markers: PlayerMarker[] = (annotations ?? []).map((a) => ({
     id: a.id,
     timestampMs: a.timestamp_ms,
+    endMs: a.end_ms,
     color: a.tags[0]?.color ?? colors.accent,
   }));
 
@@ -110,6 +135,7 @@ export default function ReviewScreen() {
             onPosition={onPosition}
             seekToMs={seekToMs}
             pauseSignal={pauseSignal}
+            pending={rangeStart != null ? { startMs: rangeStart, endMs: rangeEnd } : null}
           />
         ) : (
           <ActivityIndicator color={colors.primary} />
@@ -123,7 +149,33 @@ export default function ReviewScreen() {
             style={{ marginTop: spacing.sm }}
           />
         ) : (
-          <Button label={t("review.addNote")} onPress={openCreate} style={{ marginTop: spacing.sm }} />
+          <>
+            <AppText variant="caption" color={colors.textMuted} style={{ marginTop: spacing.sm }}>
+              {t("review.rangeHint")}
+            </AppText>
+            <View style={{ flexDirection: "row", gap: spacing.sm }}>
+              <Button
+                label={`${t("review.setStart")}${rangeStart != null ? " ✓" : ""}`}
+                variant="secondary"
+                onPress={markStart}
+                style={{ flex: 1 }}
+              />
+              <Button
+                label={`${t("review.setEnd")}${rangeEnd != null ? " ✓" : ""}`}
+                variant="secondary"
+                onPress={markEnd}
+                style={{ flex: 1 }}
+              />
+            </View>
+            {rangeStart != null ? (
+              <Pressable onPress={clearRange} hitSlop={6}>
+                <AppText variant="caption" color={colors.danger} style={{ textAlign: "center" }}>
+                  {t("review.clearRange")}
+                </AppText>
+              </Pressable>
+            ) : null}
+            <Button label={t("review.addNote")} onPress={openCreate} />
+          </>
         )}
       </Card>
 
@@ -137,6 +189,10 @@ export default function ReviewScreen() {
             editable={!isReviewed}
             onEdit={() => openEdit(a)}
             onDelete={() => deleteAnnotation.mutate(a.id)}
+            showReplies
+            recordingId={recordingId}
+            currentUserId={currentProfile.id}
+            canResolve
           />
         ))
       ) : (
@@ -162,6 +218,7 @@ export default function ReviewScreen() {
         visible={editorVisible}
         mode={editorMode}
         timestampMs={editorMode === "create" ? createTimestamp : editing?.timestamp_ms ?? 0}
+        endMs={editorMode === "create" ? createEnd : editing?.end_ms ?? null}
         tags={tags ?? []}
         initialComment={editing?.comment_text}
         initialTagIds={editing?.tags.map((x) => x.id)}
@@ -171,10 +228,11 @@ export default function ReviewScreen() {
         onCreateTag={(name) => createTag.mutateAsync(name)}
         onSubmitCreate={(p) =>
           createAnnotation.mutate(
-            { ...p, timestampMs: createTimestamp },
+            { ...p, timestampMs: createTimestamp, endMs: createEnd },
             {
               onSuccess: () => {
                 setEditorVisible(false);
+                clearRange();
                 if (recording.status === "pending") {
                   setStatus.mutate({ id: recordingId, status: "in_review" });
                 }

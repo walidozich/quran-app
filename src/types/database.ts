@@ -48,11 +48,21 @@ export type Annotation = {
   recording_id: string;
   teacher_id: string;
   timestamp_ms: number;
+  end_ms?: number | null; // when set, the annotation covers a range [timestamp_ms, end_ms]
+  resolved?: boolean;
   comment_text: string | null;
   voice_path: string | null;
   voice_duration_ms: number | null;
   created_at: string;
   updated_at: string;
+};
+
+export type AnnotationReply = {
+  id: string;
+  annotation_id: string;
+  author_id: string;
+  body: string;
+  created_at: string;
 };
 
 export type Tag = {
@@ -79,6 +89,7 @@ export type Database = {
       class_members: Table<ClassMember>;
       recordings: Table<Recording>;
       annotations: Table<Annotation>;
+      annotation_replies: Table<AnnotationReply>;
       tags: Table<Tag>;
       annotation_tags: Table<AnnotationTag>;
     };

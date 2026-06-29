@@ -215,6 +215,10 @@ Visual identity drawn from the *mushaf* (illuminated manuscript): **deep emerald
 
 **Review re-submission:** opening an already-reviewed recording no longer changes anything. To revise it the teacher taps **"تعديل المراجعة"** (confirm), which reopens it as a draft (`in_review`); the student sees no changes until the teacher submits again.
 
+**Annotation ranges:** a note can target a single instant **or a span** — the teacher taps "تعيين البداية / تعيين النهاية" while playing, and the seek bar shows a highlighted segment (`annotations.end_ms`, migration `0005`). Point notes still work (no end).
+
+**Per-annotation replies & resolve:** each annotation has a collapsible **conversation** (`annotation_replies` table, migration `0005`) — the teacher and the recording's student can reply on that specific note; the teacher can **mark it resolved ✓**. This is separate from the whole-attempt reply threads. RLS: replies are visible/writable to the annotation's teacher and the recording's student (once reviewed).
+
 ## Recording review lifecycle
 ```mermaid
 stateDiagram-v2

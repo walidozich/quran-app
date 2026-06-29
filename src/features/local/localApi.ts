@@ -7,7 +7,7 @@ import {
 } from "../../types/database";
 import type { ClassMemberWithProfile, ClassWithTeacher } from "../classes/api";
 import { genJoinCode, JoinClassError } from "../classes/joinCode";
-import type { AnnotationWithTags } from "../annotations/api";
+import type { AnnotationWithTags, ReplyWithAuthor } from "../annotations/api";
 import type { RecordingWithStudent } from "../recordings/api";
 import type { StudyAnnotation } from "../tags/studyByTag";
 import { getDb, mutate, nowIso, uid } from "./store";
@@ -194,6 +194,7 @@ export async function localInsertAnnotation(input: {
   recordingId: string;
   teacherId: string;
   timestampMs: number;
+  endMs?: number | null;
   commentText: string | null;
   voicePath: string | null;
   voiceDurationMs: number | null;
@@ -204,6 +205,8 @@ export async function localInsertAnnotation(input: {
     recording_id: input.recordingId,
     teacher_id: input.teacherId,
     timestamp_ms: Math.round(input.timestampMs),
+    end_ms: input.endMs != null ? Math.round(input.endMs) : null,
+    resolved: false,
     comment_text: input.commentText,
     voice_path: input.voicePath,
     voice_duration_ms: input.voiceDurationMs,
@@ -213,6 +216,38 @@ export async function localInsertAnnotation(input: {
   await mutate((db) => db.annotations.push(ann));
   await localSetAnnotationTags(ann.id, input.tagIds);
   return ann.id;
+}
+
+export async function localFetchReplies(annotationId: string): Promise<ReplyWithAuthor[]> {
+  const db = await getDb();
+  return db.annotation_replies
+    .filter((r) => r.annotation_id === annotationId)
+    .sort((a, b) => a.created_at.localeCompare(b.created_at))
+    .map((r) => ({
+      ...r,
+      author: db.profiles.find((p) => p.id === r.author_id)
+        ? { full_name: db.profiles.find((p) => p.id === r.author_id)!.full_name }
+        : null,
+    }));
+}
+
+export async function localAddReply(annotationId: string, authorId: string, body: string): Promise<void> {
+  await mutate((db) =>
+    db.annotation_replies.push({
+      id: uid(),
+      annotation_id: annotationId,
+      author_id: authorId,
+      body,
+      created_at: nowIso(),
+    })
+  );
+}
+
+export async function localSetResolved(id: string, resolved: boolean): Promise<void> {
+  await mutate((db) => {
+    const a = db.annotations.find((x) => x.id === id);
+    if (a) a.resolved = resolved;
+  });
 }
 
 export async function localUpdateAnnotation(

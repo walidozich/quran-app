@@ -5,7 +5,13 @@ import { formatMillis } from "../lib/audio";
 import { ColorScheme, radius, spacing, useColors } from "../theme";
 import { AppText } from "./AppText";
 
-export type PlayerMarker = { id: string; timestampMs: number; color?: string };
+export type PlayerMarker = {
+  id: string;
+  timestampMs: number;
+  /** When set (> timestampMs), the marker is a range highlighted on the bar. */
+  endMs?: number | null;
+  color?: string;
+};
 
 type Props = {
   uri: string;
@@ -16,9 +22,11 @@ type Props = {
   seekToMs?: number | null;
   /** Increment this to pause playback (e.g. when opening the annotation editor). */
   pauseSignal?: number;
+  /** In-progress range selection to preview on the bar (teacher review). */
+  pending?: { startMs: number; endMs: number | null } | null;
 };
 
-export function Player({ uri, markers = [], onMarkerPress, onPosition, seekToMs, pauseSignal }: Props) {
+export function Player({ uri, markers = [], onMarkerPress, onPosition, seekToMs, pauseSignal, pending }: Props) {
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const player = useAudioPlayer({ uri });
@@ -82,20 +90,48 @@ export function Player({ uri, markers = [], onMarkerPress, onPosition, seekToMs,
         >
           <View style={styles.barTrack}>
             <View style={[styles.barFill, { width: `${fraction * 100}%` }]} />
+
+            {/* Range annotations: a translucent segment + a dot at the start. */}
             {markers.map((m) => {
-              const left = durationMs > 0 ? Math.min(1, m.timestampMs / durationMs) : 0;
+              const startFrac = durationMs > 0 ? Math.min(1, m.timestampMs / durationMs) : 0;
+              const color = m.color ?? colors.accent;
+              const hasRange = m.endMs != null && m.endMs > m.timestampMs && durationMs > 0;
+              const endFrac = hasRange ? Math.min(1, (m.endMs as number) / durationMs) : startFrac;
               return (
-                <Pressable
-                  key={m.id}
-                  onPress={() => onMarkerPress?.(m.id)}
-                  style={[
-                    styles.marker,
-                    { left: `${left * 100}%`, backgroundColor: m.color ?? colors.accent },
-                  ]}
-                  hitSlop={8}
-                />
+                <Pressable key={m.id} onPress={() => onMarkerPress?.(m.id)} hitSlop={8}>
+                  {hasRange ? (
+                    <View
+                      style={[
+                        styles.segment,
+                        { left: `${startFrac * 100}%`, width: `${(endFrac - startFrac) * 100}%`, backgroundColor: color },
+                      ]}
+                    />
+                  ) : null}
+                  <View style={[styles.marker, { left: `${startFrac * 100}%`, backgroundColor: color }]} />
+                </Pressable>
               );
             })}
+
+            {/* In-progress selection preview. */}
+            {pending && durationMs > 0
+              ? (() => {
+                  const s = Math.min(1, pending.startMs / durationMs);
+                  const e = pending.endMs != null ? Math.min(1, pending.endMs / durationMs) : s;
+                  return (
+                    <>
+                      {pending.endMs != null && e > s ? (
+                        <View
+                          style={[
+                            styles.pendingSeg,
+                            { left: `${s * 100}%`, width: `${(e - s) * 100}%` },
+                          ]}
+                        />
+                      ) : null}
+                      <View style={[styles.pendingEdge, { left: `${s * 100}%` }]} />
+                    </>
+                  );
+                })()
+              : null}
           </View>
         </Pressable>
         <View style={styles.timeRow}>
@@ -149,6 +185,28 @@ const makeStyles = (colors: ColorScheme) =>
     height: BAR_HEIGHT,
     borderRadius: radius.pill,
     backgroundColor: colors.primary,
+  },
+  segment: {
+    position: "absolute",
+    height: BAR_HEIGHT,
+    borderRadius: radius.pill,
+    opacity: 0.5,
+  },
+  pendingSeg: {
+    position: "absolute",
+    height: BAR_HEIGHT,
+    borderRadius: radius.pill,
+    backgroundColor: colors.accent,
+    opacity: 0.55,
+  },
+  pendingEdge: {
+    position: "absolute",
+    width: 3,
+    height: BAR_HEIGHT + 8,
+    top: -(8 / 2),
+    marginLeft: -1.5,
+    borderRadius: 2,
+    backgroundColor: colors.accent,
   },
   marker: {
     position: "absolute",

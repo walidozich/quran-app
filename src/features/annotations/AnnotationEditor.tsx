@@ -18,6 +18,7 @@ type Props = {
   visible: boolean;
   mode: "create" | "edit";
   timestampMs: number;
+  endMs?: number | null;
   tags: Tag[];
   initialComment?: string | null;
   initialTagIds?: string[];
@@ -38,6 +39,7 @@ export function AnnotationEditor({
   visible,
   mode,
   timestampMs,
+  endMs,
   tags,
   initialComment,
   initialTagIds,
@@ -142,6 +144,7 @@ export function AnnotationEditor({
             </AppText>
             <AppText variant="caption" color={colors.textMuted} style={{ writingDirection: "ltr" }}>
               {t("editor.at")} {formatMillis(timestampMs)}
+              {endMs != null && endMs > timestampMs ? ` – ${formatMillis(endMs)}` : ""}
             </AppText>
 
             {/* Voice correction (create mode only) */}
