@@ -1,3 +1,4 @@
+import * as Clipboard from "expo-clipboard";
 import { useState } from "react";
 import { ActivityIndicator, Alert, Pressable, View } from "react-native";
 import { AppText, Button, Card, Screen, ScreenHeader, TextField } from "../../src/components";
@@ -25,6 +26,13 @@ function ClassCard({ cls }: { cls: ClassRow }) {
 
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(cls.name);
+  const [copied, setCopied] = useState(false);
+
+  const copyCode = async () => {
+    await Clipboard.setStringAsync(cls.join_code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
 
   const saveName = () => {
     const trimmed = name.trim();
@@ -57,22 +65,31 @@ function ClassCard({ cls }: { cls: ClassRow }) {
         <AppText variant="heading">{cls.name}</AppText>
       )}
 
-      <View
+      <Pressable
+        onPress={copyCode}
         style={{
           backgroundColor: colors.primarySoft,
           borderRadius: radius.sm,
           paddingHorizontal: spacing.md,
           paddingVertical: spacing.sm,
           alignSelf: "flex-start",
+          flexDirection: "row",
+          alignItems: "center",
+          gap: spacing.md,
         }}
       >
-        <AppText variant="caption" color={colors.textMuted}>
-          {t("classes.joinCode")}
+        <View>
+          <AppText variant="caption" color={colors.textMuted}>
+            {t("classes.joinCode")}
+          </AppText>
+          <AppText variant="heading" color={colors.primary} style={{ writingDirection: "ltr" }}>
+            {cls.join_code}
+          </AppText>
+        </View>
+        <AppText variant="caption" color={copied ? colors.success : colors.primary}>
+          {copied ? t("classes.copied") : `⧉ ${t("classes.copyCode")}`}
         </AppText>
-        <AppText variant="heading" color={colors.primary} style={{ writingDirection: "ltr" }}>
-          {cls.join_code}
-        </AppText>
-      </View>
+      </Pressable>
 
       <View style={{ flexDirection: "row", gap: spacing.md }}>
         <Pressable onPress={() => setEditing((e) => !e)} hitSlop={6}>
