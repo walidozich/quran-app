@@ -25,6 +25,7 @@ android/
 ios/
 *.apk
 *.aab
+output/
 
 # OS
 .DS_Store
