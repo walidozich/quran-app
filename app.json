@@ -49,7 +49,7 @@
         "expo-notifications",
         {
           "color": "#01443A",
-          "sounds": ["./assets/quran-app-notif.mp3"]
+          "sounds": ["./assets/quran_app_notif.mp3"]
         }
       ],
       [

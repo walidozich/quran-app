@@ -45,7 +45,7 @@ export async function registerForPush(profileId: string): Promise<void> {
       await Notifications.setNotificationChannelAsync("default", {
         name: "إشعارات صاحبك",
         importance: Notifications.AndroidImportance.HIGH,
-        sound: "quran-app-notif.mp3",
+        sound: "quran_app_notif.mp3",
         lightColor: "#01443A",
       });
     }
