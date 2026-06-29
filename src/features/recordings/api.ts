@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { USE_LOCAL_BACKEND } from "../../config/backend";
 import { supabase } from "../../config/supabase";
+import { t } from "../../i18n/ar";
 import { uploadAudio } from "../../lib/audio";
 import { Recording, RecordingStatus } from "../../types/database";
 import {
@@ -10,6 +11,7 @@ import {
   localInsertRecording,
   localSetRecordingStatus,
 } from "../local/localApi";
+import { sendPushToProfile } from "../notifications/push";
 
 export type RecordingWithStudent = Recording & { student: { full_name: string } };
 
@@ -115,9 +117,22 @@ export function useSetRecordingStatus() {
       const { error } = await supabase.from("recordings").update(patch).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: (_data, vars) => {
+    onSuccess: async (_data, vars) => {
       qc.invalidateQueries({ queryKey: recordingKeys.detail(vars.id) });
       qc.invalidateQueries({ queryKey: ["recordings"] });
+      // Notify the student when their recording is published as reviewed.
+      if (!USE_LOCAL_BACKEND && vars.status === "reviewed") {
+        const { data: rec } = await supabase
+          .from("recordings")
+          .select("student_id")
+          .eq("id", vars.id)
+          .maybeSingle();
+        if (rec?.student_id) {
+          sendPushToProfile(rec.student_id, t("notif.reviewedTitle"), t("notif.reviewedBody"), {
+            recordingId: vars.id,
+          });
+        }
+      }
     },
   });
 }
@@ -164,8 +179,21 @@ export function useCreateRecording(studentId: string) {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async (data) => {
       qc.invalidateQueries({ queryKey: recordingKeys.student(studentId) });
+      // Notify the class teacher that a new recording arrived.
+      if (!USE_LOCAL_BACKEND && data?.class_id) {
+        const { data: cls } = await supabase
+          .from("classes")
+          .select("teacher_id")
+          .eq("id", data.class_id)
+          .maybeSingle();
+        if (cls?.teacher_id) {
+          sendPushToProfile(cls.teacher_id, t("notif.newRecordingTitle"), t("notif.newRecordingBody"), {
+            recordingId: data.id,
+          });
+        }
+      }
     },
   });
 }

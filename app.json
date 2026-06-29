@@ -39,6 +39,12 @@
         {
           "microphonePermission": "يحتاج التطبيق إلى إذن الميكروفون لتسجيل التلاوة."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#01443A"
+        }
       ]
     ]
   }

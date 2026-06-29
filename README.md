@@ -202,6 +202,9 @@ Visual identity drawn from the *mushaf* (illuminated manuscript): **deep emerald
 
 **Join codes:** the teacher can **tap the join code to copy it** (manage-class screen) — shows *تم النسخ ✓*.
 
+**Push notifications:** on login the device's Expo push token is saved to `profiles.expo_push_token` (migration `0004`). When a teacher **submits a review** the student is notified, and when a student **uploads a recording** the teacher is notified (sends go through the Expo Push API; `src/features/notifications/push.ts`). These are **not** websockets — Expo Push → FCM/APNs.
+> ⚠️ Remote push requires a **dev/EAS build** (Expo Go can't receive it) and **FCM credentials** configured via EAS, plus an `eas` `projectId` in the config. It no-ops gracefully in Expo Go / on the local backend. For production, sending should move to a Supabase **Edge Function / DB trigger** (server-side) rather than from the acting client.
+
 **Light / dark theme:** two palettes (`src/theme/colors.ts`) provided via `ThemeProvider`; components read the active palette through the `useColors()` hook (never the static `colors` import). The mode persists in AsyncStorage and is toggled from the drawer. The status bar follows the theme.
 
 **Drawer & navigation:** every home screen has a menu button (top-start) opening a side **drawer** (`src/features/drawer/Drawer.tsx`) with the account, settings (dark-mode switch), and **logout**. Both role homes share one layout: actions first, then the class list. Detail screens carry a back arrow.

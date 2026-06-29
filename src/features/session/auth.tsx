@@ -3,6 +3,7 @@ import { createContext, ReactNode, useContext, useEffect, useMemo, useState } fr
 import { BYPASS_AUTH, BYPASS_ROLE, USE_LOCAL_BACKEND } from "../../config/backend";
 import { supabase } from "../../config/supabase";
 import { Profile, UserRole } from "../../types/database";
+import { registerForPush } from "../notifications/push";
 import {
   ensureDemoAccounts,
   getCurrentEmailLocal,
@@ -72,15 +73,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!mounted) return;
       setSession(data.session);
       setEmail(data.session?.user?.email ?? null);
-      if (data.session) await loadProfile(data.session.user.id);
+      if (data.session) {
+        await loadProfile(data.session.user.id);
+        registerForPush(data.session.user.id);
+      }
       setLoading(false);
     });
 
     const { data: sub } = supabase.auth.onAuthStateChange(async (_event, s) => {
       setSession(s);
       setEmail(s?.user?.email ?? null);
-      if (s) await loadProfile(s.user.id);
-      else setProfile(null);
+      if (s) {
+        await loadProfile(s.user.id);
+        registerForPush(s.user.id);
+      } else setProfile(null);
     });
 
     return () => {

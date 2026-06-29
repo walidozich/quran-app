@@ -202,6 +202,12 @@ export const ar = {
     recording: "جارٍ التسجيل…",
     cap: "الحد الأقصى ٥ دقائق",
   },
+  notif: {
+    reviewedTitle: "تمت مراجعة تلاوتك",
+    reviewedBody: "اضغط لعرض ملاحظات المعلّم",
+    newRecordingTitle: "تسجيل جديد",
+    newRecordingBody: "وصل تسجيل جديد من أحد طلابك",
+  },
   ayah: {
     pick: "اختر سورة / آية",
     search: "ابحث عن سورة…",

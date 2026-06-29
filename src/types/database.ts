@@ -11,6 +11,7 @@ export type Profile = {
   full_name: string;
   role: UserRole;
   whatsapp: string | null;
+  expo_push_token?: string | null;
   created_at: string;
 };
 
