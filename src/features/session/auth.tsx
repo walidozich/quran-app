@@ -5,19 +5,25 @@ import { supabase } from "../../config/supabase";
 import { Profile, UserRole } from "../../types/database";
 import {
   ensureDemoAccounts,
+  getCurrentEmailLocal,
   getCurrentProfileLocal,
   LocalAuthError,
   signInLocal,
   signOutLocal,
   signUpLocal,
+  updateProfileLocal,
 } from "../local/localAuth";
+
+export type ProfileUpdate = { fullName: string; whatsapp: string | null; email?: string };
 
 type AuthValue = {
   session: Session | null;
   profile: Profile | null;
+  email: string | null;
   loading: boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  updateProfile: (input: ProfileUpdate) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthValue | null>(null);
@@ -25,6 +31,7 @@ const AuthContext = createContext<AuthValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [email, setEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const loadProfile = async (uid: string) => {
@@ -48,11 +55,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               // ignore — fall back to whatever (if anything) is already signed in
             }
           }
-          return getCurrentProfileLocal();
+          return Promise.all([getCurrentProfileLocal(), getCurrentEmailLocal()]);
         })
-        .then((p) => {
+        .then(([p, mail]) => {
           if (!mounted) return;
           setProfile(p);
+          setEmail(mail);
           setLoading(false);
         });
       return () => {
@@ -63,12 +71,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(async ({ data }) => {
       if (!mounted) return;
       setSession(data.session);
+      setEmail(data.session?.user?.email ?? null);
       if (data.session) await loadProfile(data.session.user.id);
       setLoading(false);
     });
 
     const { data: sub } = supabase.auth.onAuthStateChange(async (_event, s) => {
       setSession(s);
+      setEmail(s?.user?.email ?? null);
       if (s) await loadProfile(s.user.id);
       else setProfile(null);
     });
@@ -83,24 +93,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       session,
       profile,
+      email,
       loading,
       signOut: async () => {
         if (USE_LOCAL_BACKEND) {
           await signOutLocal();
           setProfile(null);
+          setEmail(null);
           return;
         }
         await supabase.auth.signOut();
       },
       refreshProfile: async () => {
         if (USE_LOCAL_BACKEND) {
-          setProfile(await getCurrentProfileLocal());
+          const [p, mail] = await Promise.all([getCurrentProfileLocal(), getCurrentEmailLocal()]);
+          setProfile(p);
+          setEmail(mail);
           return;
         }
         if (session) await loadProfile(session.user.id);
       },
+      updateProfile: async ({ fullName, whatsapp, email: newEmail }: ProfileUpdate) => {
+        if (USE_LOCAL_BACKEND) {
+          await updateProfileLocal({ fullName, whatsapp, email: newEmail });
+          const [p, mail] = await Promise.all([getCurrentProfileLocal(), getCurrentEmailLocal()]);
+          setProfile(p);
+          setEmail(mail);
+          return;
+        }
+        if (!profile) throw new Error("not signed in");
+        const { error } = await supabase
+          .from("profiles")
+          .update({ full_name: fullName, whatsapp })
+          .eq("id", profile.id);
+        if (error) throw error;
+        if (newEmail && newEmail !== email) {
+          const { error: e2 } = await supabase.auth.updateUser({ email: newEmail });
+          if (e2) throw e2;
+        }
+        await loadProfile(profile.id);
+        setEmail(newEmail ?? email);
+      },
     }),
-    [session, profile, loading]
+    [session, profile, email, loading]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import { createContext, ReactNode, useContext, useEffect, useRef, useState } from "react";
 import { Animated, Easing, Modal, Pressable, StyleSheet, Switch, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -30,6 +31,7 @@ export function DrawerProvider({ children }: { children: ReactNode }) {
 
 function DrawerPanel({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const colors = useColors();
+  const router = useRouter();
   const { mode, toggle } = useThemeMode();
   const { profile, signOut } = useAuth();
 
@@ -64,12 +66,21 @@ function DrawerPanel({ visible, onClose }: { visible: boolean; onClose: () => vo
               <AppText variant="caption" color={colors.textMuted}>
                 {t("drawer.account")}
               </AppText>
-              <View style={[styles.accountCard, { backgroundColor: colors.primarySoft }]}>
+              <Pressable
+                onPress={() => {
+                  onClose();
+                  router.push("/profile");
+                }}
+                style={[styles.accountCard, { backgroundColor: colors.primarySoft }]}
+              >
                 <AppText variant="heading">{profile?.full_name ?? "—"}</AppText>
                 <AppText variant="caption" color={colors.textMuted}>
                   {profile ? t(`roles.${profile.role}`) : ""}
                 </AppText>
-              </View>
+                <AppText variant="caption" color={colors.primary}>
+                  {t("drawer.editProfile")} ‹
+                </AppText>
+              </Pressable>
 
               {/* Settings */}
               <AppText variant="caption" color={colors.textMuted} style={{ marginTop: spacing.lg }}>

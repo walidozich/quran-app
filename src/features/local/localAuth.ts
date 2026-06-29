@@ -32,7 +32,7 @@ export async function ensureDemoAccounts(): Promise<void> {
   if (accounts.length > 0) return;
   const seeded: LocalAccount[] = [];
   for (const d of DEMO_ACCOUNTS) {
-    const profile: Profile = { id: uid(), full_name: d.fullName, role: d.role, created_at: nowIso() };
+    const profile: Profile = { id: uid(), full_name: d.fullName, role: d.role, whatsapp: null, created_at: nowIso() };
     await mutate((db) => db.profiles.push(profile));
     seeded.push({ email: d.email, password: d.password, profileId: profile.id });
   }
@@ -54,6 +54,7 @@ export async function signUpLocal(
     id: uid(),
     full_name: fullName,
     role,
+    whatsapp: null,
     created_at: nowIso(),
   };
   await mutate((db) => db.profiles.push(profile));
@@ -83,4 +84,37 @@ export async function getCurrentProfileLocal(): Promise<Profile | null> {
   if (!id) return null;
   const db = await getDb();
   return db.profiles.find((p) => p.id === id) ?? null;
+}
+
+export async function getCurrentEmailLocal(): Promise<string | null> {
+  const id = await AsyncStorage.getItem(CURRENT_KEY);
+  if (!id) return null;
+  const accounts = await readAccounts();
+  return accounts.find((a) => a.profileId === id)?.email ?? null;
+}
+
+/** Update the current account's profile fields (+ email) in the local store. */
+export async function updateProfileLocal(input: {
+  fullName: string;
+  whatsapp: string | null;
+  email?: string;
+}): Promise<void> {
+  const id = await AsyncStorage.getItem(CURRENT_KEY);
+  if (!id) throw new LocalAuthError("not_signed_in");
+  await mutate((db) => {
+    const p = db.profiles.find((x) => x.id === id);
+    if (p) {
+      p.full_name = input.fullName;
+      p.whatsapp = input.whatsapp;
+    }
+  });
+  if (input.email) {
+    const normEmail = input.email.trim().toLowerCase();
+    const accounts = await readAccounts();
+    const acc = accounts.find((a) => a.profileId === id);
+    if (acc) {
+      acc.email = normEmail;
+      await writeAccounts(accounts);
+    }
+  }
 }

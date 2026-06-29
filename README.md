@@ -196,6 +196,12 @@ Visual identity drawn from the *mushaf* (illuminated manuscript): **deep emerald
 
 **Drawer & navigation:** every home screen has a menu button (top-start) opening a side **drawer** (`src/features/drawer/Drawer.tsx`) with the account, settings (dark-mode switch), and **logout**. Both role homes share one layout: actions first, then the class list. Detail screens carry a back arrow.
 
+**Profile:** tapping the account card in the drawer opens a **profile screen** to edit full name, email, and WhatsApp number (`whatsapp` column added in migration `0003`; email changes go through Supabase Auth).
+
+**Class management (teacher):** the manage-class screen (with the join codes) lets a teacher **rename** or **delete** a class (delete cascades its recordings/reviews) and **remove students** from it.
+
+**Review re-submission:** opening an already-reviewed recording no longer changes anything. To revise it the teacher taps **"تعديل المراجعة"** (confirm), which reopens it as a draft (`in_review`); the student sees no changes until the teacher submits again.
+
 ## Recording review lifecycle
 ```mermaid
 stateDiagram-v2

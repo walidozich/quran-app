@@ -10,6 +10,7 @@ export type Profile = {
   id: string;
   full_name: string;
   role: UserRole;
+  whatsapp: string | null;
   created_at: string;
 };
 
