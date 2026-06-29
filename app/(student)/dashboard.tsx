@@ -4,6 +4,7 @@ import {
   BarList,
   Card,
   Donut,
+  ErrorState,
   LegendDot,
   Screen,
   ScreenHeader,
@@ -20,7 +21,7 @@ import { spacing, useColors } from "../../src/theme";
 export default function StudentDashboard() {
   const colors = useColors();
   const { currentProfile } = useSession();
-  const { data: recordings, isLoading: recLoading } = useStudentRecordings(currentProfile.id);
+  const { data: recordings, isLoading: recLoading, isError, refetch } = useStudentRecordings(currentProfile.id);
   const { data: classes } = useStudentClasses(currentProfile.id);
   const { data: annotations, isLoading: annLoading } = useStudentAnnotations(currentProfile.id);
 
@@ -36,6 +37,8 @@ export default function StudentDashboard() {
 
       {recLoading ? (
         <ActivityIndicator color={colors.primary} />
+      ) : isError ? (
+        <ErrorState onRetry={() => refetch()} />
       ) : (
         <>
           <View style={styles.tileRow}>

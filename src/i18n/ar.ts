@@ -15,6 +15,7 @@ export const ar = {
     back: "رجوع",
     confirm: "تأكيد",
     continue: "متابعة",
+    errorLoading: "تعذّر تحميل البيانات",
   },
   status: {
     pending: "قيد المراجعة",
@@ -93,6 +94,7 @@ export const ar = {
     clearVoice: "حذف الصوت",
     voiceAttached: "تم إرفاق تصحيح صوتي",
     voiceRecording: "جارٍ التسجيل…",
+    cap: "الحد الأقصى دقيقتان",
     tagsLabel: "الوسوم",
     newTagPlaceholder: "وسم جديد",
     addTag: "إضافة",
@@ -198,6 +200,7 @@ export const ar = {
     permissionDenied: "نحتاج إذن الميكروفون للتسجيل",
     uploadError: "تعذّر رفع التسجيل، حاول مرة أخرى",
     recording: "جارٍ التسجيل…",
+    cap: "الحد الأقصى ٥ دقائق",
   },
   classes: {
     createTitle: "إنشاء صف جديد",

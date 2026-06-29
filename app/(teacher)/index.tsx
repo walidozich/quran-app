@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { ActivityIndicator, Pressable, View } from "react-native";
-import { AppText, Button, Card, Screen, ScreenHeader } from "../../src/components";
+import { AppText, Button, Card, EmptyState, ErrorState, Screen, ScreenHeader } from "../../src/components";
 import { useTeacherClasses } from "../../src/features/classes/api";
 import { useSession } from "../../src/features/session/auth";
 import { t } from "../../src/i18n/ar";
@@ -10,7 +10,7 @@ export default function TeacherHome() {
   const router = useRouter();
   const colors = useColors();
   const { currentProfile } = useSession();
-  const { data: classes, isLoading } = useTeacherClasses(currentProfile.id);
+  const { data: classes, isLoading, isError, refetch } = useTeacherClasses(currentProfile.id);
 
   const hasClasses = (classes?.length ?? 0) > 0;
 
@@ -28,6 +28,8 @@ export default function TeacherHome() {
       <AppText variant="subheading">{t("classes.myClasses")}</AppText>
       {isLoading ? (
         <ActivityIndicator color={colors.primary} />
+      ) : isError ? (
+        <ErrorState onRetry={() => refetch()} />
       ) : hasClasses ? (
         classes!.map((cls) => (
           <Pressable key={cls.id} onPress={() => router.push(`/(teacher)/class/${cls.id}`)}>
@@ -45,9 +47,7 @@ export default function TeacherHome() {
           </Pressable>
         ))
       ) : (
-        <Card>
-          <AppText color={colors.textMuted}>{t("classes.noClasses")}</AppText>
-        </Card>
+        <EmptyState message={t("classes.noClasses")} />
       )}
     </Screen>
   );

@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
-import { AppText, Badge, Card, Screen, ScreenHeader } from "../../../src/components";
+import { AppText, Badge, Card, EmptyState, ErrorState, Screen, ScreenHeader } from "../../../src/components";
 import { BadgeStatus } from "../../../src/components/Badge";
 import { useTeacherClasses } from "../../../src/features/classes/api";
 import { RecordingWithStudent, useTeacherRecordings } from "../../../src/features/recordings/api";
@@ -26,7 +26,7 @@ export default function TeacherClass() {
   const { classId } = useLocalSearchParams<{ classId: string }>();
   const { currentProfile } = useSession();
   const { data: classes } = useTeacherClasses(currentProfile.id);
-  const { data: recordings, isLoading } = useTeacherRecordings(currentProfile.id);
+  const { data: recordings, isLoading, isError, refetch } = useTeacherRecordings(currentProfile.id);
 
   const cls = classes?.find((c) => c.id === classId) ?? null;
   const [filter, setFilter] = useState<string | null>(null); // student_id, or null = all
@@ -54,10 +54,10 @@ export default function TeacherClass() {
 
       {isLoading ? (
         <ActivityIndicator color={colors.primary} />
+      ) : isError ? (
+        <ErrorState onRetry={() => refetch()} />
       ) : !hasAny ? (
-        <Card>
-          <AppText color={colors.textMuted}>{t("teacherClass.noRecordings")}</AppText>
-        </Card>
+        <EmptyState message={t("teacherClass.noRecordings")} />
       ) : (
         <>
           {/* Filter by student — only worth showing with more than one student. */}

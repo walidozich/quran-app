@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
-import { AppText, Card, Screen, ScreenHeader, TagChip } from "../../src/components";
+import { AppText, Card, ErrorState, Screen, ScreenHeader, TagChip } from "../../src/components";
 import { AnnotationCard } from "../../src/features/annotations/AnnotationCard";
 import { AnnotationWithTags } from "../../src/features/annotations/api";
 import { useStudentAnnotations } from "../../src/features/tags/studyByTag";
@@ -14,7 +14,7 @@ export default function StudyByTag() {
   const router = useRouter();
   const colors = useColors();
   const { currentProfile } = useSession();
-  const { data: results, isLoading } = useStudentAnnotations(currentProfile.id);
+  const { data: results, isLoading, isError, refetch } = useStudentAnnotations(currentProfile.id);
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
 
   const allTags = useMemo<Tag[]>(() => {
@@ -34,6 +34,8 @@ export default function StudyByTag() {
 
       {isLoading ? (
         <ActivityIndicator color={colors.primary} />
+      ) : isError ? (
+        <ErrorState onRetry={() => refetch()} />
       ) : allTags.length === 0 ? (
         <Card>
           <AppText color={colors.textMuted}>{t("study.noTags")}</AppText>

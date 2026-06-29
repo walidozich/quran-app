@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ActivityIndicator, Pressable, View } from "react-native";
-import { AppText, Badge, Button, Card, Screen, ScreenHeader } from "../../../src/components";
+import { AppText, Badge, Button, Card, EmptyState, ErrorState, Screen, ScreenHeader } from "../../../src/components";
 import { BadgeStatus } from "../../../src/components/Badge";
 import { useStudentClasses } from "../../../src/features/classes/api";
 import { useStudentRecordings } from "../../../src/features/recordings/api";
@@ -21,7 +21,7 @@ export default function StudentClass() {
   const colors = useColors();
   const { currentProfile } = useSession();
   const { data: classes } = useStudentClasses(currentProfile.id);
-  const { data: recordings, isLoading } = useStudentRecordings(currentProfile.id);
+  const { data: recordings, isLoading, isError, refetch } = useStudentRecordings(currentProfile.id);
 
   const cls = classes?.find((c) => c.id === classId) ?? null;
   const threads = buildThreads((recordings ?? []).filter((r) => r.class_id === classId));
@@ -41,6 +41,8 @@ export default function StudentClass() {
       <AppText variant="subheading">{t("studentHome.myRecordings")}</AppText>
       {isLoading ? (
         <ActivityIndicator color={colors.primary} />
+      ) : isError ? (
+        <ErrorState onRetry={() => refetch()} />
       ) : threads.length > 0 ? (
         threads.map((thread) => {
           const badge = studentBadge(thread.latest.status);
@@ -59,7 +61,7 @@ export default function StudentClass() {
           );
         })
       ) : (
-        <AppText color={colors.textMuted}>{t("studentClass.noRecordings")}</AppText>
+        <EmptyState message={t("studentClass.noRecordings")} />
       )}
     </Screen>
   );
