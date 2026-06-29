@@ -1,5 +1,6 @@
 import Constants, { ExecutionEnvironment } from "expo-constants";
 import * as Device from "expo-device";
+import { Platform } from "react-native";
 import { USE_LOCAL_BACKEND } from "../../config/backend";
 import { supabase } from "../../config/supabase";
 
@@ -12,6 +13,11 @@ const IS_EXPO_GO =
 
 const EXPO_PUSH_ENDPOINT = "https://exp.host/--/api/v2/push/send";
 
+/** Push is only usable in a real dev/standalone build on a physical device. */
+export function isPushSupported(): boolean {
+  return !USE_LOCAL_BACKEND && !IS_EXPO_GO && Device.isDevice;
+}
+
 /**
  * Ask for permission, get this device's Expo push token, and save it on the
  * user's profile. No-ops on the local backend, in Expo Go, on simulators, or
@@ -19,7 +25,7 @@ const EXPO_PUSH_ENDPOINT = "https://exp.host/--/api/v2/push/send";
  */
 export async function registerForPush(profileId: string): Promise<void> {
   try {
-    if (USE_LOCAL_BACKEND || IS_EXPO_GO || !Device.isDevice) return;
+    if (!isPushSupported()) return;
 
     // Lazy require so Expo Go never loads expo-notifications.
     const Notifications = require("expo-notifications") as typeof import("expo-notifications");
@@ -32,6 +38,17 @@ export async function registerForPush(profileId: string): Promise<void> {
         shouldSetBadge: false,
       }),
     });
+
+    // Android 8+ shows sound/heads-up per *channel*. HIGH = peek + sound; the
+    // custom sound file is bundled via the expo-notifications plugin (app.json).
+    if (Platform.OS === "android") {
+      await Notifications.setNotificationChannelAsync("default", {
+        name: "إشعارات صاحبك",
+        importance: Notifications.AndroidImportance.HIGH,
+        sound: "quran-app-notif.mp3",
+        lightColor: "#01443A",
+      });
+    }
 
     const { status: existing } = await Notifications.getPermissionsAsync();
     let status = existing;
@@ -46,8 +63,10 @@ export async function registerForPush(profileId: string): Promise<void> {
 
     const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
     await supabase.from("profiles").update({ expo_push_token: token }).eq("id", profileId);
-  } catch {
-    // Expo Go / no FCM / offline — ignore.
+  } catch (e) {
+    // Expo Go / no FCM / offline — best-effort. Logged so `adb logcat` can surface
+    // setup issues (e.g. missing google-services.json) during testing.
+    console.warn("[push] registerForPush failed:", e);
   }
 }
 
@@ -58,8 +77,28 @@ export async function sendPushToProfile(
   body: string,
   data?: Record<string, unknown>
 ): Promise<void> {
+  if (USE_LOCAL_BACKEND) return;
+
+  // 1) Persist for the in-app notification center (history). Best-effort; the
+  //    insert is allowed by RLS only when actor_id is the current user.
   try {
-    if (USE_LOCAL_BACKEND) return;
+    const actorId = (await supabase.auth.getSession()).data.session?.user?.id ?? null;
+    if (actorId) {
+      await supabase.from("notifications").insert({
+        recipient_id: profileId,
+        actor_id: actorId,
+        title,
+        body,
+        recording_id: (data?.recordingId as string | undefined) ?? null,
+      });
+    }
+  } catch {
+    // history is best-effort
+  }
+
+  // 2) Deliver the push via Expo → FCM. Android plays the "default" channel's
+  //    (custom) sound; channelId routes the notification to that channel.
+  try {
     const { data: prof } = await supabase
       .from("profiles")
       .select("expo_push_token")
@@ -71,7 +110,7 @@ export async function sendPushToProfile(
     await fetch(EXPO_PUSH_ENDPOINT, {
       method: "POST",
       headers: { Accept: "application/json", "Content-Type": "application/json" },
-      body: JSON.stringify([{ to: token, title, body, data, sound: "default" }]),
+      body: JSON.stringify([{ to: token, title, body, data, sound: "default", channelId: "default" }]),
     });
   } catch {
     // never block the action on a failed notification

@@ -1,7 +1,7 @@
 // All user-facing copy lives here. Never hardcode Arabic text in components.
 export const ar = {
   app: {
-    name: "منصة تعليم القرآن",
+    name: "صاحبك",
   },
   common: {
     save: "حفظ",
@@ -231,6 +231,17 @@ export const ar = {
     reviewedBody: "اضغط لعرض ملاحظات المعلّم",
     newRecordingTitle: "تسجيل جديد",
     newRecordingBody: "وصل تسجيل جديد من أحد طلابك",
+    replyTitle: "رد جديد على ملاحظة",
+    replyBody: "اضغط لعرض الرد على المراجعة",
+  },
+  notifCenter: {
+    title: "الإشعارات",
+    empty: "لا توجد إشعارات بعد",
+    markAllRead: "تعليم الكل كمقروء",
+    justNow: "الآن",
+    minutesAgo: "منذ دقائق",
+    hoursAgo: "منذ ساعات",
+    daysAgo: "منذ أيام",
   },
   ayah: {
     pick: "اختر الموضع",

@@ -85,6 +85,18 @@ export type AnnotationReply = {
   created_at: string;
 };
 
+export type NotificationRow = {
+  id: string;
+  recipient_id: string;
+  actor_id: string | null;
+  type: string | null;
+  title: string;
+  body: string | null;
+  recording_id: string | null;
+  read: boolean;
+  created_at: string;
+};
+
 export type Tag = {
   id: string;
   name: string;
@@ -110,6 +122,7 @@ export type Database = {
       recordings: Table<Recording>;
       annotations: Table<Annotation>;
       annotation_replies: Table<AnnotationReply>;
+      notifications: Table<NotificationRow>;
       tags: Table<Tag>;
       annotation_tags: Table<AnnotationTag>;
     };

@@ -19,6 +19,9 @@ yarn-error.*
 .env.*
 !.env.example
 .mcp.json
+google-services.json
+*service-account*.json
+*fcm*.json
 
 # Native build artifacts
 android/

@@ -3,7 +3,9 @@ import { useRouter } from "expo-router";
 import { useMemo } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
+import { useUnreadCount } from "../features/notifications/api";
 import { useDrawer } from "../features/drawer/Drawer";
+import { useAuth } from "../features/session/auth";
 import { t } from "../i18n/ar";
 import { ColorScheme, radius, spacing, useColors } from "../theme";
 import { AppText } from "./AppText";
@@ -17,13 +19,15 @@ type Props = {
   menu?: boolean;
   /** Hide the reload button on screens where it isn't useful. */
   reload?: boolean;
+  /** Hide the notification bell (e.g. on the notifications screen itself). */
+  bell?: boolean;
 };
 
 /**
  * App bar: a leading control (menu on roots, back elsewhere) + title + manual
  * reload, closed by a thin gold "illumination" rule — the app's signature.
  */
-export function ScreenHeader({ title, subtitle, back, menu, reload = true }: Props) {
+export function ScreenHeader({ title, subtitle, back, menu, reload = true, bell = true }: Props) {
   const router = useRouter();
   const drawer = useDrawer();
   const qc = useQueryClient();
@@ -31,6 +35,9 @@ export function ScreenHeader({ title, subtitle, back, menu, reload = true }: Pro
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const fetching = useIsFetching() > 0;
   const showBack = !menu && (back ?? router.canGoBack());
+  const { profile } = useAuth();
+  const { data: unread = 0 } = useUnreadCount(profile?.id);
+  const showBell = bell && Boolean(profile);
 
   const goBack = () => {
     if (router.canGoBack()) router.back();
@@ -70,6 +77,25 @@ export function ScreenHeader({ title, subtitle, back, menu, reload = true }: Pro
             </AppText>
           ) : null}
         </View>
+
+        {showBell ? (
+          <Pressable
+            onPress={() => router.push("/notifications")}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t("notifCenter.title")}
+            style={({ pressed }) => [styles.reloadBtn, pressed && styles.pressed]}
+          >
+            <BellIcon color={colors.primary} />
+            {unread > 0 ? (
+              <View style={styles.badge}>
+                <AppText color={colors.textOnPrimary} style={styles.badgeText}>
+                  {unread > 9 ? "9+" : String(unread)}
+                </AppText>
+              </View>
+            ) : null}
+          </Pressable>
+        ) : null}
 
         {reload ? (
           <Pressable
@@ -134,6 +160,24 @@ const makeStyles = (colors: ColorScheme) =>
     pressed: {
       opacity: 0.6,
     },
+    badge: {
+      position: "absolute",
+      top: -3,
+      right: -3,
+      minWidth: 18,
+      height: 18,
+      borderRadius: 9,
+      paddingHorizontal: 4,
+      backgroundColor: colors.danger,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 2,
+      borderColor: colors.background,
+    },
+    badgeText: {
+      fontSize: 10,
+      lineHeight: 14,
+    },
     ruleRow: {
       flexDirection: "row",
       alignItems: "center",
@@ -164,6 +208,21 @@ function BackIcon({ color }: { color: string }) {
   return (
     <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
       <Path d="M5 12h14M13 5l7 7-7 7" stroke={color} strokeWidth={2.25} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+function BellIcon({ color }: { color: string }) {
+  return (
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path d="M13.7 21a2 2 0 0 1-3.4 0" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   );
 }

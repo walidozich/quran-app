@@ -8,7 +8,9 @@ import { I18nManager } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { BrandSplash } from "../src/components";
 import { DrawerProvider } from "../src/features/drawer/Drawer";
-import { AuthProvider } from "../src/features/session/auth";
+import { AuthProvider, useAuth } from "../src/features/session/auth";
+import { useAppBadge, useNotificationRouting } from "../src/features/notifications/useNotificationRouting";
+import { useUnreadCount } from "../src/features/notifications/api";
 import { queryClient } from "../src/lib/queryClient";
 import { ThemeProvider, useThemeMode } from "../src/theme";
 
@@ -54,7 +56,13 @@ export default function RootLayout() {
 
 function Chrome({ fontsLoaded }: { fontsLoaded: boolean }) {
   const { mode } = useThemeMode();
+  const { profile } = useAuth();
+  const { data: unread = 0 } = useUnreadCount(profile?.id);
   const [splashDone, setSplashDone] = useState(false);
+  // Tapping a push notification deep-links to the relevant recording.
+  useNotificationRouting(profile?.role);
+  // Mirror the unread count onto the app-icon badge.
+  useAppBadge(unread);
   return (
     <>
       <StatusBar style={mode === "dark" ? "light" : "dark"} />
