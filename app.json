@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "منصة تعليم القرآن",
+    "name": "صاحبك",
     "slug": "quran-learning-platform",
     "scheme": "quranapp",
     "version": "1.0.0",
@@ -13,6 +13,7 @@
     },
     "android": {
       "package": "com.quranapp.learning",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#01443A",
         "foregroundImage": "./assets/android-icon-foreground.png"
@@ -47,7 +48,8 @@
       [
         "expo-notifications",
         {
-          "color": "#01443A"
+          "color": "#01443A",
+          "sounds": ["./assets/quran-app-notif.mp3"]
         }
       ],
       [
