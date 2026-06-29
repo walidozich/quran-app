@@ -77,6 +77,33 @@ export async function localJoinClass(studentId: string, rawCode: string): Promis
   return cls;
 }
 
+export async function localRenameClass(classId: string, name: string): Promise<void> {
+  await mutate((db) => {
+    const c = db.classes.find((x) => x.id === classId);
+    if (c) c.name = name;
+  });
+}
+
+export async function localDeleteClass(classId: string): Promise<void> {
+  await mutate((db) => {
+    const recIds = db.recordings.filter((r) => r.class_id === classId).map((r) => r.id);
+    const annIds = db.annotations.filter((a) => recIds.includes(a.recording_id)).map((a) => a.id);
+    db.annotation_tags = db.annotation_tags.filter((at) => !annIds.includes(at.annotation_id));
+    db.annotations = db.annotations.filter((a) => !recIds.includes(a.recording_id));
+    db.recordings = db.recordings.filter((r) => r.class_id !== classId);
+    db.class_members = db.class_members.filter((m) => m.class_id !== classId);
+    db.classes = db.classes.filter((c) => c.id !== classId);
+  });
+}
+
+export async function localRemoveMember(classId: string, studentId: string): Promise<void> {
+  await mutate((db) => {
+    db.class_members = db.class_members.filter(
+      (m) => !(m.class_id === classId && m.student_id === studentId)
+    );
+  });
+}
+
 // ---- recordings -----------------------------------------------------------
 export async function localFetchStudentRecordings(studentId: string): Promise<Recording[]> {
   const db = await getDb();

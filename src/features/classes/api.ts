@@ -4,10 +4,13 @@ import { supabase } from "../../config/supabase";
 import { ClassRow } from "../../types/database";
 import {
   localCreateClass,
+  localDeleteClass,
   localFetchClassMembers,
   localFetchStudentClasses,
   localFetchTeacherClasses,
   localJoinClass,
+  localRemoveMember,
+  localRenameClass,
 } from "../local/localApi";
 import { genJoinCode, JoinClassError } from "./joinCode";
 
@@ -137,5 +140,49 @@ export function useJoinClass(studentId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: classKeys.studentClasses(studentId) });
     },
+  });
+}
+
+export function useRenameClass(teacherId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ classId, name }: { classId: string; name: string }): Promise<void> => {
+      if (USE_LOCAL_BACKEND) return localRenameClass(classId, name);
+      const { error } = await supabase.from("classes").update({ name }).eq("id", classId);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: classKeys.teacher(teacherId) }),
+  });
+}
+
+export function useDeleteClass(teacherId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (classId: string): Promise<void> => {
+      if (USE_LOCAL_BACKEND) return localDeleteClass(classId);
+      // FK cascades remove members, recordings, and annotations.
+      const { error } = await supabase.from("classes").delete().eq("id", classId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: classKeys.teacher(teacherId) });
+      qc.invalidateQueries({ queryKey: ["recordings"] });
+    },
+  });
+}
+
+export function useRemoveMember(classId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (studentId: string): Promise<void> => {
+      if (USE_LOCAL_BACKEND) return localRemoveMember(classId, studentId);
+      const { error } = await supabase
+        .from("class_members")
+        .delete()
+        .eq("class_id", classId)
+        .eq("student_id", studentId);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: classKeys.members(classId) }),
   });
 }
