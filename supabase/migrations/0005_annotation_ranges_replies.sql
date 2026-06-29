@@ -15,20 +15,41 @@ create index if not exists idx_annotation_replies_annotation on annotation_repli
 alter table annotation_replies enable row level security;
 
 -- Visible/writable to the annotation's teacher, or the recording's student once reviewed.
-create policy "replies_select" on annotation_replies for select to authenticated using (
-  annotation_id in (
-    select a.id from annotations a join recordings r on r.id = a.recording_id
-    where a.teacher_id = auth.uid()
-       or (r.student_id = auth.uid() and r.status = 'reviewed')
-  )
-);
-create policy "replies_insert" on annotation_replies for insert to authenticated with check (
-  author_id = auth.uid()
-  and annotation_id in (
-    select a.id from annotations a join recordings r on r.id = a.recording_id
-    where a.teacher_id = auth.uid()
-       or (r.student_id = auth.uid() and r.status = 'reviewed')
-  )
-);
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public'
+      and tablename = 'annotation_replies'
+      and policyname = 'replies_select'
+  ) then
+    create policy "replies_select" on annotation_replies for select to authenticated using (
+      annotation_id in (
+        select a.id from annotations a join recordings r on r.id = a.recording_id
+        where a.teacher_id = auth.uid()
+           or (r.student_id = auth.uid() and r.status = 'reviewed')
+      )
+    );
+  end if;
+end $$;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public'
+      and tablename = 'annotation_replies'
+      and policyname = 'replies_insert'
+  ) then
+    create policy "replies_insert" on annotation_replies for insert to authenticated with check (
+      author_id = auth.uid()
+      and annotation_id in (
+        select a.id from annotations a join recordings r on r.id = a.recording_id
+        where a.teacher_id = auth.uid()
+           or (r.student_id = auth.uid() and r.status = 'reviewed')
+      )
+    );
+  end if;
+end $$;
 
 grant select, insert on annotation_replies to authenticated;
