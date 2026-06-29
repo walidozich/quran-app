@@ -68,6 +68,14 @@ export function AnnotationCard({
         </AppText>
       </Pressable>
 
+      {onJump ? (
+        <Button
+          label={t("review.goTo")}
+          variant="secondary"
+          onPress={() => onJump(annotation.timestamp_ms)}
+        />
+      ) : null}
+
       {annotation.comment_text ? (
         <AppText variant="body">{annotation.comment_text}</AppText>
       ) : null}

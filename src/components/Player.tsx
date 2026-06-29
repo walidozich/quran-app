@@ -2,7 +2,7 @@ import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { GestureResponderEvent, Pressable, StyleSheet, View } from "react-native";
 import { formatMillis } from "../lib/audio";
-import { ColorScheme, radius, spacing, useColors } from "../theme";
+import { ColorScheme, spacing, useColors } from "../theme";
 import { AppText } from "./AppText";
 
 export type PlayerMarker = {
@@ -32,6 +32,8 @@ export function Player({ uri, markers = [], onMarkerPress, onPosition, seekToMs,
   const player = useAudioPlayer({ uri });
   const status = useAudioPlayerStatus(player);
   const [barWidth, setBarWidth] = useState(0);
+  // Stylized waveform bars — deterministic per source so they don't flicker.
+  const heights = useMemo(() => waveformHeights(uri), [uri]);
 
   const durationMs = (status.duration || 0) * 1000;
   const currentMs = (status.currentTime || 0) * 1000;
@@ -88,26 +90,50 @@ export function Player({ uri, markers = [], onMarkerPress, onPosition, seekToMs,
           onLayout={(e) => setBarWidth(e.nativeEvent.layout.width)}
           style={styles.barTouch}
         >
-          <View style={styles.barTrack}>
-            <View style={[styles.barFill, { width: `${fraction * 100}%` }]} />
-
-            {/* Range annotations: a translucent segment + a dot at the start. */}
-            {markers.map((m) => {
-              const startFrac = durationMs > 0 ? Math.min(1, m.timestampMs / durationMs) : 0;
-              const color = m.color ?? colors.accent;
-              const hasRange = m.endMs != null && m.endMs > m.timestampMs && durationMs > 0;
-              const endFrac = hasRange ? Math.min(1, (m.endMs as number) / durationMs) : startFrac;
+          <View style={styles.wave}>
+            {/* Waveform bars — played portion in primary, rest muted. */}
+            {heights.map((h, i) => {
+              const center = (i + 0.5) / heights.length;
               return (
-                <Pressable key={m.id} onPress={() => onMarkerPress?.(m.id)} hitSlop={8}>
-                  {hasRange ? (
-                    <View
-                      style={[
-                        styles.segment,
-                        { left: `${startFrac * 100}%`, width: `${(endFrac - startFrac) * 100}%`, backgroundColor: color },
-                      ]}
-                    />
-                  ) : null}
-                  <View style={[styles.marker, { left: `${startFrac * 100}%`, backgroundColor: color }]} />
+                <View
+                  key={i}
+                  style={[
+                    styles.waveBar,
+                    { height: `${Math.max(8, h * 100)}%`, backgroundColor: center <= fraction ? colors.primary : colors.border },
+                  ]}
+                />
+              );
+            })}
+
+            {/* Range highlight (non-interactive) behind the markers. */}
+            {markers.map((m) => {
+              if (m.endMs == null || m.endMs <= m.timestampMs || durationMs <= 0) return null;
+              const s = Math.min(1, m.timestampMs / durationMs);
+              const e = Math.min(1, m.endMs / durationMs);
+              return (
+                <View
+                  key={`${m.id}-seg`}
+                  pointerEvents="none"
+                  style={[
+                    styles.segment,
+                    { left: `${s * 100}%`, width: `${(e - s) * 100}%`, backgroundColor: m.color ?? colors.accent },
+                  ]}
+                />
+              );
+            })}
+
+            {/* A pointer line + dot at each remark (tap to jump). */}
+            {markers.map((m) => {
+              const left = durationMs > 0 ? Math.min(1, m.timestampMs / durationMs) : 0;
+              const color = m.color ?? colors.accent;
+              return (
+                <Pressable
+                  key={m.id}
+                  onPress={() => onMarkerPress?.(m.id)}
+                  hitSlop={10}
+                  style={[styles.markerLine, { left: `${left * 100}%`, backgroundColor: color }]}
+                >
+                  <View style={[styles.markerDot, { backgroundColor: color }]} />
                 </Pressable>
               );
             })}
@@ -147,80 +173,101 @@ export function Player({ uri, markers = [], onMarkerPress, onPosition, seekToMs,
   );
 }
 
-const BAR_HEIGHT = 6;
-const MARKER_SIZE = 14;
+const WAVE_BARS = 44;
+const WAVE_HEIGHT = 40;
+const MARKER_SIZE = 12;
+
+// Deterministic pseudo-random bar heights (0.15–1) seeded by the audio source,
+// so each recording has a stable "waveform" look. (Stylized, not decoded PCM.)
+function waveformHeights(uri: string): number[] {
+  let seed = 2166136261;
+  for (let i = 0; i < uri.length; i++) seed = (Math.imul(seed ^ uri.charCodeAt(i), 16777619)) >>> 0;
+  const rand = () => {
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+    return seed / 0xffffffff;
+  };
+  return Array.from({ length: WAVE_BARS }, () => 0.15 + rand() * 0.85);
+}
 
 const makeStyles = (colors: ColorScheme) =>
   StyleSheet.create({
-  wrap: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-    direction: "ltr",
-  },
-  playButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  barColumn: {
-    flex: 1,
-  },
-  barTouch: {
-    paddingVertical: spacing.sm,
-    justifyContent: "center",
-  },
-  barTrack: {
-    height: BAR_HEIGHT,
-    borderRadius: radius.pill,
-    backgroundColor: colors.border,
-    justifyContent: "center",
-  },
-  barFill: {
-    position: "absolute",
-    left: 0,
-    height: BAR_HEIGHT,
-    borderRadius: radius.pill,
-    backgroundColor: colors.primary,
-  },
-  segment: {
-    position: "absolute",
-    height: BAR_HEIGHT,
-    borderRadius: radius.pill,
-    opacity: 0.5,
-  },
-  pendingSeg: {
-    position: "absolute",
-    height: BAR_HEIGHT,
-    borderRadius: radius.pill,
-    backgroundColor: colors.accent,
-    opacity: 0.55,
-  },
-  pendingEdge: {
-    position: "absolute",
-    width: 3,
-    height: BAR_HEIGHT + 8,
-    top: -(8 / 2),
-    marginLeft: -1.5,
-    borderRadius: 2,
-    backgroundColor: colors.accent,
-  },
-  marker: {
-    position: "absolute",
-    width: MARKER_SIZE,
-    height: MARKER_SIZE,
-    borderRadius: MARKER_SIZE / 2,
-    marginLeft: -MARKER_SIZE / 2,
-    top: BAR_HEIGHT / 2 - MARKER_SIZE / 2,
-    borderWidth: 2,
-    borderColor: colors.surface,
-  },
-  timeRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: spacing.xs,
-  },
-});
+    wrap: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.md,
+      direction: "ltr",
+    },
+    playButton: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: colors.primary,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    barColumn: {
+      flex: 1,
+    },
+    barTouch: {
+      paddingVertical: spacing.sm,
+      justifyContent: "center",
+    },
+    wave: {
+      height: WAVE_HEIGHT,
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    waveBar: {
+      flex: 1,
+      marginHorizontal: 1,
+      borderRadius: 2,
+      minHeight: 3,
+    },
+    segment: {
+      position: "absolute",
+      top: 0,
+      bottom: 0,
+      borderRadius: 4,
+      opacity: 0.22,
+    },
+    pendingSeg: {
+      position: "absolute",
+      top: 0,
+      bottom: 0,
+      borderRadius: 4,
+      backgroundColor: colors.accent,
+      opacity: 0.25,
+    },
+    pendingEdge: {
+      position: "absolute",
+      width: 2,
+      top: -3,
+      bottom: -3,
+      marginLeft: -1,
+      borderRadius: 2,
+      backgroundColor: colors.accent,
+    },
+    markerLine: {
+      position: "absolute",
+      top: -4,
+      bottom: -4,
+      width: 2,
+      marginLeft: -1,
+      borderRadius: 1,
+    },
+    markerDot: {
+      position: "absolute",
+      top: -7,
+      left: -(MARKER_SIZE / 2) + 1,
+      width: MARKER_SIZE,
+      height: MARKER_SIZE,
+      borderRadius: MARKER_SIZE / 2,
+      borderWidth: 2,
+      borderColor: colors.surface,
+    },
+    timeRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      marginTop: spacing.xs,
+    },
+  });
