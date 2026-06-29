@@ -36,12 +36,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const loadProfile = async (uid: string) => {
-    const { data } = await supabase.from("profiles").select("*").eq("id", uid).maybeSingle();
-    setProfile(data ?? null);
+    try {
+      const { data } = await supabase.from("profiles").select("*").eq("id", uid).maybeSingle();
+      setProfile(data ?? null);
+    } catch {
+      // Network/backend unreachable — don't leave the app hanging on a spinner.
+      setProfile(null);
+    }
   };
 
   useEffect(() => {
     let mounted = true;
+    // Safety net: never stay stuck on the loading screen, even if the backend
+    // is unreachable (e.g. the phone can't reach the Supabase port).
+    const safety = setTimeout(() => {
+      if (mounted) setLoading(false);
+    }, 8000);
 
     if (USE_LOCAL_BACKEND) {
       ensureDemoAccounts()
@@ -62,23 +72,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (!mounted) return;
           setProfile(p);
           setEmail(mail);
-          setLoading(false);
+        })
+        .catch(() => {})
+        .then(() => {
+          if (mounted) setLoading(false);
+          clearTimeout(safety);
         });
       return () => {
         mounted = false;
+        clearTimeout(safety);
       };
     }
 
-    supabase.auth.getSession().then(async ({ data }) => {
-      if (!mounted) return;
-      setSession(data.session);
-      setEmail(data.session?.user?.email ?? null);
-      if (data.session) {
-        await loadProfile(data.session.user.id);
-        registerForPush(data.session.user.id);
-      }
-      setLoading(false);
-    });
+    supabase.auth
+      .getSession()
+      .then(async ({ data }) => {
+        if (!mounted) return;
+        setSession(data.session);
+        setEmail(data.session?.user?.email ?? null);
+        if (data.session) {
+          await loadProfile(data.session.user.id);
+          registerForPush(data.session.user.id);
+        }
+      })
+      .catch(() => {})
+      .then(() => {
+        if (mounted) setLoading(false);
+        clearTimeout(safety);
+      });
 
     const { data: sub } = supabase.auth.onAuthStateChange(async (_event, s) => {
       setSession(s);
@@ -91,6 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       mounted = false;
+      clearTimeout(safety);
       sub.subscription.unsubscribe();
     };
   }, []);
