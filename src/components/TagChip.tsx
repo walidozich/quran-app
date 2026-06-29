@@ -37,7 +37,8 @@ export function TagChip({ label, color, selected = false, onPress }: Props) {
 const styles = StyleSheet.create({
   chip: {
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs + 2,
+    paddingTop: spacing.xs + 2,
+    paddingBottom: spacing.xs + 4,
     borderRadius: radius.pill,
     borderWidth: 1,
   },

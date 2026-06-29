@@ -14,7 +14,17 @@ export function AppText({ variant = "body", color, style, ...rest }: Props) {
   return (
     <Text
       // RTL Arabic text aligns right by default
-      style={[textStyles[variant], { color: color ?? colors.text, textAlign: "right", writingDirection: "rtl" }, style]}
+      style={[
+        textStyles[variant],
+        {
+          color: color ?? colors.text,
+          textAlign: "right",
+          writingDirection: "rtl",
+          includeFontPadding: true,
+          paddingBottom: 2,
+        },
+        style,
+      ]}
       {...rest}
     />
   );

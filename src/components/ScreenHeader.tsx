@@ -2,6 +2,7 @@ import { useIsFetching, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useMemo } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
+import Svg, { Path } from "react-native-svg";
 import { useDrawer } from "../features/drawer/Drawer";
 import { t } from "../i18n/ar";
 import { ColorScheme, radius, spacing, useColors } from "../theme";
@@ -46,9 +47,7 @@ export function ScreenHeader({ title, subtitle, back, menu, reload = true }: Pro
             accessibilityLabel={t("drawer.menu")}
             style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
           >
-            <AppText variant="heading" color={colors.primary}>
-              ☰
-            </AppText>
+            <MenuIcon color={colors.primary} />
           </Pressable>
         ) : showBack ? (
           <Pressable
@@ -59,9 +58,7 @@ export function ScreenHeader({ title, subtitle, back, menu, reload = true }: Pro
             style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
           >
             {/* RTL: the previous screen is to the right, so "back" points right. */}
-            <AppText variant="heading" color={colors.primary}>
-              →
-            </AppText>
+            <BackIcon color={colors.primary} />
           </Pressable>
         ) : null}
 
@@ -86,9 +83,7 @@ export function ScreenHeader({ title, subtitle, back, menu, reload = true }: Pro
             {fetching ? (
               <ActivityIndicator color={colors.primary} size="small" />
             ) : (
-              <AppText variant="button" color={colors.primary}>
-                ⟳
-              </AppText>
+              <ReloadIcon color={colors.primary} />
             )}
           </Pressable>
         ) : null}
@@ -156,3 +151,34 @@ const makeStyles = (colors: ColorScheme) =>
       transform: [{ rotate: "45deg" }],
     },
   });
+
+function MenuIcon({ color }: { color: string }) {
+  return (
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+      <Path d="M5 7h14M5 12h14M5 17h14" stroke={color} strokeWidth={2.25} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function BackIcon({ color }: { color: string }) {
+  return (
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+      <Path d="M5 12h14M13 5l7 7-7 7" stroke={color} strokeWidth={2.25} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+function ReloadIcon({ color }: { color: string }) {
+  return (
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+      <Path d="M20 6v5h-5" stroke={color} strokeWidth={2.1} strokeLinecap="round" strokeLinejoin="round" />
+      <Path
+        d="M19.2 14.1a7.2 7.2 0 1 1-1.7-7.4L20 11"
+        stroke={color}
+        strokeWidth={2.1}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}

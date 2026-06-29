@@ -62,8 +62,11 @@ const makeStyles = (colors: ColorScheme) =>
       borderColor: colors.border,
       borderRadius: radius.md,
       paddingHorizontal: spacing.md,
-      paddingVertical: spacing.md,
+      paddingTop: spacing.md,
+      paddingBottom: spacing.md + 4,
+      minHeight: 62,
       textAlign: "right",
       writingDirection: "rtl",
+      includeFontPadding: true,
     },
   });

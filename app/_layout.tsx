@@ -1,9 +1,4 @@
-import {
-  Tajawal_400Regular,
-  Tajawal_500Medium,
-  Tajawal_700Bold,
-  useFonts,
-} from "@expo-google-fonts/tajawal";
+import { AmiriQuran_400Regular, useFonts } from "@expo-google-fonts/amiri-quran";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -28,10 +23,9 @@ I18nManager.forceRTL(true);
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
+  // Amiri Quran ships a single weight; hierarchy comes from size/color, not weight.
   const [fontsLoaded] = useFonts({
-    Tajawal_400Regular,
-    Tajawal_500Medium,
-    Tajawal_700Bold,
+    AmiriQuran_400Regular,
   });
 
   useEffect(() => {
