@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from "expo-router";
 import { useCallback, useRef, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, Alert, View } from "react-native";
 import { AppText, Button, Card, Player, Screen, ScreenHeader } from "../../../src/components";
 import { PlayerMarker } from "../../../src/components/Player";
 import { AnnotationCard } from "../../../src/features/annotations/AnnotationCard";
@@ -64,6 +64,18 @@ export default function ReviewScreen() {
     setEditorVisible(true);
   };
 
+  // Reopen an already-submitted review for editing (student won't see changes
+  // until it's submitted again). Confirm first so it's never silent.
+  const reopenReview = () => {
+    Alert.alert(t("review.reopen"), t("review.reopenConfirm"), [
+      { text: t("common.cancel"), style: "cancel" },
+      {
+        text: t("common.continue"),
+        onPress: () => setStatus.mutate({ id: recordingId, status: "in_review" }),
+      },
+    ]);
+  };
+
   const markers: PlayerMarker[] = (annotations ?? []).map((a) => ({
     id: a.id,
     timestampMs: a.timestamp_ms,
@@ -102,7 +114,17 @@ export default function ReviewScreen() {
         ) : (
           <ActivityIndicator color={colors.primary} />
         )}
-        <Button label={t("review.addNote")} onPress={openCreate} style={{ marginTop: spacing.sm }} />
+        {isReviewed ? (
+          <Button
+            label={t("review.reopen")}
+            variant="secondary"
+            onPress={reopenReview}
+            loading={setStatus.isPending}
+            style={{ marginTop: spacing.sm }}
+          />
+        ) : (
+          <Button label={t("review.addNote")} onPress={openCreate} style={{ marginTop: spacing.sm }} />
+        )}
       </Card>
 
       <AppText variant="subheading">{t("review.annotations")}</AppText>
@@ -112,7 +134,7 @@ export default function ReviewScreen() {
             key={a.id}
             annotation={a}
             onJump={(ms) => setSeekToMs(ms)}
-            editable
+            editable={!isReviewed}
             onEdit={() => openEdit(a)}
             onDelete={() => deleteAnnotation.mutate(a.id)}
           />
