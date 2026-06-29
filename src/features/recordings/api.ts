@@ -110,6 +110,9 @@ export function useSetRecordingStatus() {
       id: string;
       status: RecordingStatus;
       reviewedAt?: string | null;
+      // Optional context for a richer notification (not persisted).
+      teacherName?: string;
+      label?: string;
     }): Promise<void> => {
       if (USE_LOCAL_BACKEND) return localSetRecordingStatus(id, status, reviewedAt);
       const patch: { status: RecordingStatus; reviewed_at?: string | null } = { status };
@@ -128,7 +131,10 @@ export function useSetRecordingStatus() {
           .eq("id", vars.id)
           .maybeSingle();
         if (rec?.student_id) {
-          sendPushToProfile(rec.student_id, t("notif.reviewedTitle"), t("notif.reviewedBody"), {
+          const body = vars.teacherName
+            ? `${vars.teacherName}${vars.label ? ` — ${vars.label}` : ""}`
+            : t("notif.reviewedBody");
+          sendPushToProfile(rec.student_id, t("notif.reviewedTitle"), body, {
             recordingId: vars.id,
           });
         }
@@ -143,6 +149,8 @@ export type NewRecordingInput = {
   localUri: string;
   durationMs: number;
   respondsToId?: string | null;
+  /** Sender's display name, for a richer notification (not persisted). */
+  studentName?: string;
 } & Partial<RecordingReference>;
 
 export function useCreateRecording(studentId: string) {
@@ -193,7 +201,7 @@ export function useCreateRecording(studentId: string) {
       if (error) throw error;
       return data;
     },
-    onSuccess: async (data) => {
+    onSuccess: async (data, vars) => {
       qc.invalidateQueries({ queryKey: recordingKeys.student(studentId) });
       // Notify the class teacher that a new recording arrived.
       if (!USE_LOCAL_BACKEND && data?.class_id) {
@@ -203,7 +211,10 @@ export function useCreateRecording(studentId: string) {
           .eq("id", data.class_id)
           .maybeSingle();
         if (cls?.teacher_id) {
-          sendPushToProfile(cls.teacher_id, t("notif.newRecordingTitle"), t("notif.newRecordingBody"), {
+          const body = vars.studentName
+            ? `${vars.studentName}${vars.label ? ` — ${vars.label}` : ""}`
+            : t("notif.newRecordingBody");
+          sendPushToProfile(cls.teacher_id, t("notif.newRecordingTitle"), body, {
             recordingId: data.id,
           });
         }

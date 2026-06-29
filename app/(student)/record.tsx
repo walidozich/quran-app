@@ -136,6 +136,7 @@ export default function RecordScreen() {
         localUri: recordedUri,
         durationMs,
         respondsToId: respondsTo ?? null,
+        studentName: currentProfile.full_name,
         ref_type: quranReference?.ref_type ?? null,
         surah_start: quranReference?.surah_start ?? null,
         ayah_start: quranReference?.ayah_start ?? null,

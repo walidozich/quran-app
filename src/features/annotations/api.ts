@@ -1,8 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { USE_LOCAL_BACKEND } from "../../config/backend";
 import { supabase } from "../../config/supabase";
+import { t } from "../../i18n/ar";
 import { uploadAudio } from "../../lib/audio";
 import { Annotation, AnnotationReply, Tag } from "../../types/database";
+import { sendPushToProfile } from "../notifications/push";
 import {
   localAddReply,
   localDeleteAnnotation,
@@ -194,6 +196,46 @@ export function useAnnotationReplies(annotationId: string) {
   });
 }
 
+/**
+ * Notify the *other* party in an annotation conversation that a reply arrived:
+ * if the teacher replied, ping the student, and vice versa. Best-effort.
+ */
+async function notifyReplyRecipient(
+  annotationId: string,
+  authorId: string,
+  replyText: string
+): Promise<void> {
+  try {
+    const { data: ann } = await supabase
+      .from("annotations")
+      .select("teacher_id, recording_id")
+      .eq("id", annotationId)
+      .maybeSingle();
+    if (!ann) return;
+    const { data: rec } = await supabase
+      .from("recordings")
+      .select("student_id")
+      .eq("id", ann.recording_id)
+      .maybeSingle();
+    if (!rec) return;
+    const recipient = authorId === ann.teacher_id ? rec.student_id : ann.teacher_id;
+    if (!recipient || recipient === authorId) return;
+
+    const { data: author } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", authorId)
+      .maybeSingle();
+    const snippet = replyText.length > 60 ? `${replyText.slice(0, 60)}…` : replyText;
+    const body = author?.full_name ? `${author.full_name}: ${snippet}` : t("notif.replyBody");
+    sendPushToProfile(recipient, t("notif.replyTitle"), body, {
+      recordingId: ann.recording_id,
+    });
+  } catch {
+    // never block the reply on a failed notification lookup
+  }
+}
+
 export function useAddReply(annotationId: string, authorId: string) {
   const qc = useQueryClient();
   return useMutation({
@@ -205,6 +247,7 @@ export function useAddReply(annotationId: string, authorId: string) {
         .from("annotation_replies")
         .insert({ annotation_id: annotationId, author_id: authorId, body: text });
       if (error) throw error;
+      await notifyReplyRecipient(annotationId, authorId, text);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: annotationKeys.replies(annotationId) }),
   });

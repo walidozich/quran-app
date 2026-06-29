@@ -207,7 +207,13 @@ export default function ReviewScreen() {
         <Button
           label={t("review.submit")}
           onPress={() =>
-            setStatus.mutate({ id: recordingId, status: "reviewed", reviewedAt: new Date().toISOString() })
+            setStatus.mutate({
+              id: recordingId,
+              status: "reviewed",
+              reviewedAt: new Date().toISOString(),
+              teacherName: currentProfile.full_name,
+              label: recording?.label,
+            })
           }
           loading={setStatus.isPending}
           disabled={!annotations || annotations.length === 0}
