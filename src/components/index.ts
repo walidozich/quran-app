@@ -14,3 +14,5 @@ export type { PlayerMarker } from "./Player";
 export { StatTile, BarList, Donut, LegendDot } from "./Charts";
 export type { DonutSegment } from "./Charts";
 export { EmptyState, ErrorState } from "./StateView";
+export { AyahPicker } from "./AyahPicker";
+export { RecordingOrb } from "./RecordingOrb";

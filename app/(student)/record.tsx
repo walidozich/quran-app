@@ -8,7 +8,7 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { View } from "react-native";
-import { AppText, Button, Card, Screen, ScreenHeader, TextField } from "../../src/components";
+import { AppText, AyahPicker, Button, Card, RecordingOrb, Screen, ScreenHeader, TextField } from "../../src/components";
 import { MAX_RECITATION_MS } from "../../src/config/recording";
 import { useStudentClasses } from "../../src/features/classes/api";
 import { useCreateRecording } from "../../src/features/recordings/api";
@@ -36,6 +36,7 @@ export default function RecordScreen() {
   const [recordedUri, setRecordedUri] = useState<string | null>(null);
   const [durationMs, setDurationMs] = useState(0);
   const [label, setLabel] = useState(inheritedLabel ?? "");
+  const [pickerVisible, setPickerVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const source = useMemo(() => (recordedUri ? { uri: recordedUri } : null), [recordedUri]);
@@ -123,7 +124,8 @@ export default function RecordScreen() {
       <Card>
         {recorderState.isRecording ? (
           <>
-            <AppText variant="heading" color={colors.danger}>
+            <RecordingOrb />
+            <AppText variant="heading" color={colors.danger} style={{ textAlign: "center" }}>
               {t("record.recording")}
             </AppText>
             <AppText variant="title" style={{ writingDirection: "ltr", textAlign: "center" }}>
@@ -162,6 +164,7 @@ export default function RecordScreen() {
             onChangeText={setLabel}
             placeholder={t("record.labelPlaceholder")}
           />
+          <Button label={t("ayah.pick")} variant="secondary" onPress={() => setPickerVisible(true)} />
           <Button
             label={createRecording.isPending ? t("record.uploading") : t("record.upload")}
             onPress={onUpload}
@@ -170,6 +173,12 @@ export default function RecordScreen() {
           />
         </>
       ) : null}
+
+      <AyahPicker
+        visible={pickerVisible}
+        onClose={() => setPickerVisible(false)}
+        onPick={(picked) => setLabel(picked)}
+      />
 
       {error ? (
         <Card style={{ borderColor: colors.danger }}>

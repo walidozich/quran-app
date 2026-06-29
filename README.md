@@ -196,6 +196,12 @@ Visual identity drawn from the *mushaf* (illuminated manuscript): **deep emerald
 
 **Recording caps:** recitations auto-stop at **5 min**, voice corrections at **2 min** (`src/config/recording.ts`).
 
+**Recording UI:** while recording, a pulsing **`RecordingOrb`** (voice-assistant style ripple, not a waveform) shows it's live.
+
+**Naming a recitation:** an **ayah picker** (`AyahPicker`, all 114 surahs + optional ayah range, Arabic-Indic numerals) fills the recording label, e.g. *سورة البقرة ١–٥*. The free-text label stays editable for custom names.
+
+**Join codes:** the teacher can **tap the join code to copy it** (manage-class screen) — shows *تم النسخ ✓*.
+
 **Light / dark theme:** two palettes (`src/theme/colors.ts`) provided via `ThemeProvider`; components read the active palette through the `useColors()` hook (never the static `colors` import). The mode persists in AsyncStorage and is toggled from the drawer. The status bar follows the theme.
 
 **Drawer & navigation:** every home screen has a menu button (top-start) opening a side **drawer** (`src/features/drawer/Drawer.tsx`) with the account, settings (dark-mode switch), and **logout**. Both role homes share one layout: actions first, then the class list. Detail screens carry a back arrow.

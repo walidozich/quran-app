@@ -7,7 +7,7 @@ import {
 } from "expo-audio";
 import { useEffect, useMemo, useState } from "react";
 import { Modal, ScrollView, StyleSheet, View } from "react-native";
-import { AppText, Button, Card, TagChip, TextField } from "../../components";
+import { AppText, Button, Card, RecordingOrb, TagChip, TextField } from "../../components";
 import { MAX_CORRECTION_MS } from "../../config/recording";
 import { t } from "../../i18n/ar";
 import { ensureRecordingReady, formatMillis, setPlaybackMode } from "../../lib/audio";
@@ -149,7 +149,10 @@ export function AnnotationEditor({
               <Card>
                 {recorderState.isRecording ? (
                   <>
-                    <AppText color={colors.danger}>{t("editor.voiceRecording")}</AppText>
+                    <RecordingOrb size={96} />
+                    <AppText color={colors.danger} style={{ textAlign: "center" }}>
+                      {t("editor.voiceRecording")}
+                    </AppText>
                     <AppText variant="heading" style={{ writingDirection: "ltr", textAlign: "center" }}>
                       {formatMillis(recorderState.durationMillis)}
                     </AppText>

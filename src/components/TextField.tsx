@@ -10,7 +10,7 @@ type Props = {
   placeholder?: string;
   autoCapitalize?: "none" | "sentences";
   secureTextEntry?: boolean;
-  keyboardType?: "default" | "email-address";
+  keyboardType?: "default" | "email-address" | "numeric" | "number-pad";
 };
 
 export function TextField({
