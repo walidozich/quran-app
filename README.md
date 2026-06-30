@@ -181,6 +181,20 @@ Identity from the *mushaf*: **emerald** (`#0E5E4E`) + **gold** (`#C9A227`) on pa
 
 ---
 
+## Contributing
+
+Contributions are welcome! Please:
+1. Read **[`CONTRIBUTING.md`](CONTRIBUTING.md)** — it covers setting up **your own** Supabase project
+   (create one, apply `supabase/migrations/`, fill `.env`), running the app, and the PR workflow.
+2. Skim **[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)** for the design, data model, and screen map.
+3. Before a PR: `npx tsc --noEmit` and `npx expo export --platform android` must pass (CI enforces this).
+
+By participating you agree to the [Code of Conduct](CODE_OF_CONDUCT.md). Report vulnerabilities
+privately per [`SECURITY.md`](SECURITY.md). Licensed under [MIT](LICENSE).
+
+> The `.env` in this repo (gitignored) points at the maintainer's backend — contributors run against
+> their **own** Supabase project, so you don't need any of the maintainer's keys.
+
 ## Project layout
 
 ```
