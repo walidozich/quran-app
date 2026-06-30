@@ -4,7 +4,7 @@ An Arabic, right-to-left mobile app where **students record Quran recitations** 
 
 > ## ❤️ A charity project — free forever, never for profit
 > This is built as a **sadaqah (صدقة جارية)** — for good deeds, not money. Under the
-> [PolyForm Noncommercial License](LICENSE), **any commercial use is strictly not allowed**:
+> [PolyForm Noncommercial License](LICENSE.md), **any commercial use is strictly not allowed**:
 > no selling, no charging for access, no paywalls, and **no advertising or monetization** of any kind.
 > Use it, fork it, improve it, and share it freely — for free. Keep it that way. 🤲
 
@@ -196,7 +196,7 @@ Contributions are welcome! Please:
 3. Before a PR: `npx tsc --noEmit` and `npx expo export --platform android` must pass (CI enforces this).
 
 By participating you agree to the [Code of Conduct](CODE_OF_CONDUCT.md) and that your contributions
-are released under the project's [PolyForm Noncommercial License](LICENSE) — i.e. **non-commercial use
+are released under the project's [PolyForm Noncommercial License](LICENSE.md) — i.e. **non-commercial use
 only** (no selling, paywalls, or ads). Report vulnerabilities privately per [`SECURITY.md`](SECURITY.md).
 
 > The `.env` in this repo (gitignored) points at the maintainer's backend — contributors run against
