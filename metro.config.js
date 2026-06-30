@@ -8,4 +8,8 @@ config.transformer.babelTransformerPath = require.resolve("react-native-svg-tran
 config.resolver.assetExts = config.resolver.assetExts.filter((ext) => ext !== "svg");
 config.resolver.sourceExts = [...config.resolver.sourceExts, "svg"];
 
+// Don't watch the native build dirs (only created for APK builds) — they hold huge
+// gradle/cmake caches that blow past the Linux inotify watch limit during Expo Go dev.
+config.resolver.blockList = /\/(android\/(\.gradle|\.cxx|build|app\/build)|ios\/build)\/.*/;
+
 module.exports = config;
