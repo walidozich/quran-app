@@ -6,45 +6,66 @@
 #   ./build-apk.sh
 #
 # Requirements:
-#   - JDK 17 (Gradle cannot run on Java 25). Override the path if yours differs:
-#       JAVA_HOME=/path/to/jdk17 ./build-apk.sh
-#   - Android SDK (defaults to ~/Android/Sdk; override with ANDROID_HOME=...)
+#   - JDK 17 (Gradle can't run on Java 21/25+). Uses $JAVA_HOME if it points at a
+#     17, otherwise auto-detects one in common locations.
+#   - Android SDK ($ANDROID_HOME, or ~/Android/Sdk).
 #
 # The embedded Supabase backend comes from .env (EXPO_PUBLIC_* are inlined at
-# bundle time). Switch backends by editing .env, then re-run this script.
+# bundle time). Switch backends by editing .env, then re-run.
 
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT"
 
-export JAVA_HOME="${JAVA_HOME:-/home/walidozich/jdks/jdk-17.0.19+10}"
+# --- locate a JDK 17 (portable: no hardcoded user paths) ---------------------
+is_jdk17() { [ -x "$1/bin/java" ] && "$1/bin/java" -version 2>&1 | grep -q 'version "17'; }
+
+JDK=""
+if [ -n "${JAVA_HOME:-}" ] && is_jdk17 "$JAVA_HOME"; then
+  JDK="$JAVA_HOME"
+else
+  for d in \
+    /usr/lib/jvm/java-17-openjdk* \
+    /usr/lib/jvm/*temurin*17* \
+    /usr/lib/jvm/*-17-* \
+    /usr/lib/jvm/*17* \
+    "$HOME"/.sdkman/candidates/java/17* \
+    "$HOME"/jdks/jdk-17* \
+    /Library/Java/JavaVirtualMachines/*17*/Contents/Home; do
+    if is_jdk17 "$d"; then JDK="$d"; break; fi
+  done
+fi
+
+if [ -z "$JDK" ]; then
+  echo "✗ JDK 17 not found. Install JDK 17 (e.g. Temurin/OpenJDK) and/or set JAVA_HOME to it." >&2
+  echo "  Gradle here can't run on Java 21/25+; this project needs 17." >&2
+  exit 1
+fi
+export JAVA_HOME="$JDK"
 export ANDROID_HOME="${ANDROID_HOME:-$HOME/Android/Sdk}"
 export PATH="$JAVA_HOME/bin:$PATH"
 
-echo "▶ JAVA_HOME=$JAVA_HOME"
-echo "▶ ANDROID_HOME=$ANDROID_HOME"
-
-if [ ! -x "$JAVA_HOME/bin/java" ]; then
-  echo "✗ JDK 17 not found at \$JAVA_HOME. Set JAVA_HOME to a JDK 17 install." >&2
+if [ ! -d "$ANDROID_HOME" ]; then
+  echo "✗ Android SDK not found at '$ANDROID_HOME'. Set ANDROID_HOME to your SDK location." >&2
   exit 1
 fi
+
+echo "▶ JAVA_HOME=$JAVA_HOME"
+echo "▶ ANDROID_HOME=$ANDROID_HOME"
 
 if [ -f .env ]; then
   echo "▶ Backend (.env): $(grep -E '^EXPO_PUBLIC_SUPABASE_URL' .env | head -1 || echo '(none)')"
 fi
 
 # Re-sync the native project from app.json (plugins, name, google-services, sounds).
-# Plain prebuild (merge) is fast (~20-40s) and keeps the Gradle/native cache, so
-# it's safe to run every build. (Do NOT use --clean here: that wipes android/ and
-# forces a ~15-min native recompile. Run it manually only if things get out of sync.)
+# Plain prebuild (merge) is fast and keeps the Gradle/native cache, so it's safe
+# every build. (Do NOT use --clean: it wipes android/ and forces a long native recompile.)
 echo "▶ Syncing native project (expo prebuild)…"
 npx expo prebuild -p android --no-install
 
 # Gradle does NOT treat .env as a build input, so an incremental build can ship a
-# stale JS bundle (wrong Supabase URL). Force a fresh bundle every time by clearing
-# the bundle/asset/apk outputs. (We avoid `gradlew clean` — its native CMake clean
-# task is broken on this setup.)
+# stale JS bundle (wrong Supabase URL). Force a fresh bundle by clearing outputs.
 echo "▶ Clearing stale bundle/asset/apk outputs…"
 rm -rf android/app/build/generated/assets \
        android/app/build/intermediates/assets \
