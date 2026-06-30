@@ -150,6 +150,7 @@ export async function localInsertRecording(input: {
   audioPath: string;
   durationMs: number;
   respondsToId: string | null;
+  wirdId?: string | null;
   refType?: Recording["ref_type"] | null;
   surahStart?: number | null;
   ayahStart?: number | null;
@@ -166,6 +167,7 @@ export async function localInsertRecording(input: {
     audio_path: input.audioPath,
     duration_ms: Math.round(input.durationMs),
     responds_to_id: input.respondsToId,
+    wird_id: input.wirdId ?? null,
     status: "pending",
     reviewed_at: null,
     created_at: nowIso(),

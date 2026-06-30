@@ -61,6 +61,29 @@ export type Recording = {
   ayah_end?: number | null;
   page_start?: number | null;
   page_end?: number | null;
+  // The assigned wird this recording fulfills (null for free recordings).
+  wird_id?: string | null;
+};
+
+/** A teacher-assigned task (ورد). student_id null = assigned to the whole class. */
+export type Wird = RecordingReference & {
+  id: string;
+  class_id: string;
+  teacher_id: string;
+  student_id: string | null;
+  title: string | null;
+  note: string | null;
+  due_at: string | null;
+  created_at: string;
+};
+
+/** Presence of a row = the teacher marked that student's wird complete. */
+export type WirdCompletion = {
+  id: string;
+  wird_id: string;
+  student_id: string;
+  completed_at: string;
+  completed_by: string | null;
 };
 
 export type Annotation = {
@@ -125,6 +148,8 @@ export type Database = {
       notifications: Table<NotificationRow>;
       tags: Table<Tag>;
       annotation_tags: Table<AnnotationTag>;
+      wirds: Table<Wird>;
+      wird_completions: Table<WirdCompletion>;
     };
     Views: { [_ in never]: never };
     Functions: { [_ in never]: never };

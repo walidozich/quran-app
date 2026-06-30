@@ -149,6 +149,8 @@ export type NewRecordingInput = {
   localUri: string;
   durationMs: number;
   respondsToId?: string | null;
+  /** The assigned wird this recording fulfills (null for free recordings). */
+  wirdId?: string | null;
   /** Sender's display name, for a richer notification (not persisted). */
   studentName?: string;
 } & Partial<RecordingReference>;
@@ -168,6 +170,7 @@ export function useCreateRecording(studentId: string) {
           audioPath: storedPath,
           durationMs: input.durationMs,
           respondsToId: input.respondsToId ?? null,
+          wirdId: input.wirdId ?? null,
           refType: input.ref_type ?? null,
           surahStart: input.surah_start ?? null,
           ayahStart: input.ayah_start ?? null,
@@ -187,6 +190,7 @@ export function useCreateRecording(studentId: string) {
           audio_path: storedPath,
           duration_ms: Math.round(input.durationMs),
           responds_to_id: input.respondsToId ?? null,
+          wird_id: input.wirdId ?? null,
           status: "pending",
           ref_type: input.ref_type ?? null,
           surah_start: input.surah_start ?? null,
