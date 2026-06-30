@@ -1,14 +1,14 @@
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
-import { AppText, Card, ErrorState, Screen, ScreenHeader, TagChip } from "../../../src/components";
-import { AnnotationCard } from "../../../src/features/annotations/AnnotationCard";
-import { AnnotationWithTags } from "../../../src/features/annotations/api";
-import { useStudentAnnotations } from "../../../src/features/tags/studyByTag";
-import { useSession } from "../../../src/features/session/auth";
-import { t } from "../../../src/i18n/ar";
-import { Tag } from "../../../src/types/database";
-import { spacing, useColors } from "../../../src/theme";
+import { AppText, Card, ErrorState, Screen, ScreenHeader, TagChip } from "../../src/components";
+import { AnnotationCard } from "../../src/features/annotations/AnnotationCard";
+import { AnnotationWithTags } from "../../src/features/annotations/api";
+import { useStudentAnnotations } from "../../src/features/tags/studyByTag";
+import { useSession } from "../../src/features/session/auth";
+import { t } from "../../src/i18n/ar";
+import { Tag } from "../../src/types/database";
+import { spacing, useColors } from "../../src/theme";
 
 export default function StudyByTag() {
   const router = useRouter();

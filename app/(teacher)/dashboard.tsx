@@ -10,19 +10,19 @@ import {
   Screen,
   ScreenHeader,
   StatTile,
-} from "../../../src/components";
-import { useTeacherAnnotations } from "../../../src/features/annotations/api";
-import { useTeacherClasses } from "../../../src/features/classes/api";
-import { useTeacherRecordings } from "../../../src/features/recordings/api";
-import { useSession } from "../../../src/features/session/auth";
+} from "../../src/components";
+import { useTeacherAnnotations } from "../../src/features/annotations/api";
+import { useTeacherClasses } from "../../src/features/classes/api";
+import { useTeacherRecordings } from "../../src/features/recordings/api";
+import { useSession } from "../../src/features/session/auth";
 import {
   mostRecitedSurahs,
   statusCounts,
   surahStruggleMap,
   tagFrequency,
-} from "../../../src/features/stats/aggregate";
-import { t } from "../../../src/i18n/ar";
-import { spacing, useColors } from "../../../src/theme";
+} from "../../src/features/stats/aggregate";
+import { t } from "../../src/i18n/ar";
+import { spacing, useColors } from "../../src/theme";
 
 export default function TeacherDashboard() {
   const colors = useColors();

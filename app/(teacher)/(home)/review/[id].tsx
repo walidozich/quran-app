@@ -1,27 +1,27 @@
 import { useLocalSearchParams } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, View } from "react-native";
-import { AppText, Button, Card, Player, Screen, ScreenHeader } from "../../../src/components";
-import { PlayerMarker } from "../../../src/components/Player";
-import { AnnotationCard } from "../../../src/features/annotations/AnnotationCard";
-import { AnnotationEditor } from "../../../src/features/annotations/AnnotationEditor";
+import { AppText, Button, Card, Player, Screen, ScreenHeader } from "../../../../src/components";
+import { PlayerMarker } from "../../../../src/components/Player";
+import { AnnotationCard } from "../../../../src/features/annotations/AnnotationCard";
+import { AnnotationEditor } from "../../../../src/features/annotations/AnnotationEditor";
 import {
   AnnotationWithTags,
   useAnnotations,
   useCreateAnnotation,
   useDeleteAnnotation,
   useUpdateAnnotation,
-} from "../../../src/features/annotations/api";
+} from "../../../../src/features/annotations/api";
 import {
   useRecording,
   useSetRecordingStatus,
   useSignedAudioUrl,
-} from "../../../src/features/recordings/api";
-import { useSession } from "../../../src/features/session/auth";
-import { useCreateTag, useTags } from "../../../src/features/tags/useTags";
-import { t } from "../../../src/i18n/ar";
-import { formatDateTime } from "../../../src/lib/datetime";
-import { spacing, useColors } from "../../../src/theme";
+} from "../../../../src/features/recordings/api";
+import { useSession } from "../../../../src/features/session/auth";
+import { useCreateTag, useTags } from "../../../../src/features/tags/useTags";
+import { t } from "../../../../src/i18n/ar";
+import { formatDateTime } from "../../../../src/lib/datetime";
+import { spacing, useColors } from "../../../../src/theme";
 
 export default function ReviewScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();

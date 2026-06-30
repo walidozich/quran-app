@@ -1,7 +1,7 @@
 import * as Clipboard from "expo-clipboard";
 import { useState } from "react";
 import { ActivityIndicator, Alert, Pressable, View } from "react-native";
-import { AppText, Button, Card, Screen, ScreenHeader, TextField } from "../../../src/components";
+import { AppText, Button, Card, Screen, ScreenHeader, TextField } from "../../src/components";
 import {
   ClassMemberWithProfile,
   useClassMembers,
@@ -10,11 +10,11 @@ import {
   useRemoveMember,
   useRenameClass,
   useTeacherClasses,
-} from "../../../src/features/classes/api";
-import { useSession } from "../../../src/features/session/auth";
-import { t } from "../../../src/i18n/ar";
-import { ClassRow } from "../../../src/types/database";
-import { radius, spacing, useColors } from "../../../src/theme";
+} from "../../src/features/classes/api";
+import { useSession } from "../../src/features/session/auth";
+import { t } from "../../src/i18n/ar";
+import { ClassRow } from "../../src/types/database";
+import { radius, spacing, useColors } from "../../src/theme";
 
 function ClassCard({ cls }: { cls: ClassRow }) {
   const colors = useColors();

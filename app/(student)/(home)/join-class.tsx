@@ -1,10 +1,10 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { AppText, Button, Card, Screen, ScreenHeader, TextField } from "../../src/components";
-import { JoinClassError, useJoinClass } from "../../src/features/classes/api";
-import { useSession } from "../../src/features/session/auth";
-import { t } from "../../src/i18n/ar";
-import { useColors } from "../../src/theme";
+import { AppText, Button, Card, Screen, ScreenHeader, TextField } from "../../../src/components";
+import { JoinClassError, useJoinClass } from "../../../src/features/classes/api";
+import { useSession } from "../../../src/features/session/auth";
+import { t } from "../../../src/i18n/ar";
+import { useColors } from "../../../src/theme";
 
 export default function JoinClass() {
   const router = useRouter();

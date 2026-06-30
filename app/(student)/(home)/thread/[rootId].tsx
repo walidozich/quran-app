@@ -1,14 +1,14 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
-import { AppText, Badge, Button, Screen, ScreenHeader } from "../../../src/components";
-import { BadgeStatus } from "../../../src/components/Badge";
-import { useStudentRecordings } from "../../../src/features/recordings/api";
-import { RecordingReviewPanel } from "../../../src/features/recordings/RecordingReviewPanel";
-import { buildThreads } from "../../../src/features/recordings/threads";
-import { useSession } from "../../../src/features/session/auth";
-import { t } from "../../../src/i18n/ar";
-import type { Recording, RecordingStatus } from "../../../src/types/database";
-import { spacing, useColors } from "../../../src/theme";
+import { AppText, Badge, Button, Screen, ScreenHeader } from "../../../../src/components";
+import { BadgeStatus } from "../../../../src/components/Badge";
+import { useStudentRecordings } from "../../../../src/features/recordings/api";
+import { RecordingReviewPanel } from "../../../../src/features/recordings/RecordingReviewPanel";
+import { buildThreads } from "../../../../src/features/recordings/threads";
+import { useSession } from "../../../../src/features/session/auth";
+import { t } from "../../../../src/i18n/ar";
+import type { Recording, RecordingStatus } from "../../../../src/types/database";
+import { spacing, useColors } from "../../../../src/theme";
 
 function badgeFor(status: RecordingStatus): { status: BadgeStatus; label: string } {
   if (status === "reviewed") return { status: "reviewed", label: t("status.reviewed") };

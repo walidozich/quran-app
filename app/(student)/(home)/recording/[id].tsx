@@ -1,11 +1,11 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ActivityIndicator } from "react-native";
-import { AppText, Button, Screen } from "../../../src/components";
-import { useRecording } from "../../../src/features/recordings/api";
-import { RecordingReviewPanel } from "../../../src/features/recordings/RecordingReviewPanel";
-import { t } from "../../../src/i18n/ar";
-import { spacing, useColors } from "../../../src/theme";
-import type { Recording } from "../../../src/types/database";
+import { AppText, Button, Screen } from "../../../../src/components";
+import { useRecording } from "../../../../src/features/recordings/api";
+import { RecordingReviewPanel } from "../../../../src/features/recordings/RecordingReviewPanel";
+import { t } from "../../../../src/i18n/ar";
+import { spacing, useColors } from "../../../../src/theme";
+import type { Recording } from "../../../../src/types/database";
 
 export default function StudentRecordingView() {
   const router = useRouter();

@@ -1,15 +1,15 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
-import { AppText, Badge, Card, EmptyState, ErrorState, Screen, ScreenHeader } from "../../../src/components";
-import { BadgeStatus } from "../../../src/components/Badge";
-import { useTeacherClasses } from "../../../src/features/classes/api";
-import { RecordingWithStudent, useTeacherRecordings } from "../../../src/features/recordings/api";
-import { buildThreads, Thread } from "../../../src/features/recordings/threads";
-import { useSession } from "../../../src/features/session/auth";
-import { t } from "../../../src/i18n/ar";
-import { RecordingStatus } from "../../../src/types/database";
-import { ColorScheme, radius, spacing, useColors } from "../../../src/theme";
+import { AppText, Badge, Card, EmptyState, ErrorState, Screen, ScreenHeader } from "../../../../src/components";
+import { BadgeStatus } from "../../../../src/components/Badge";
+import { useTeacherClasses } from "../../../../src/features/classes/api";
+import { RecordingWithStudent, useTeacherRecordings } from "../../../../src/features/recordings/api";
+import { buildThreads, Thread } from "../../../../src/features/recordings/threads";
+import { useSession } from "../../../../src/features/session/auth";
+import { t } from "../../../../src/i18n/ar";
+import { RecordingStatus } from "../../../../src/types/database";
+import { ColorScheme, radius, spacing, useColors } from "../../../../src/theme";
 
 function teacherBadge(status: RecordingStatus): { status: BadgeStatus; label: string } {
   if (status === "reviewed") return { status: "reviewed", label: t("status.reviewed") };

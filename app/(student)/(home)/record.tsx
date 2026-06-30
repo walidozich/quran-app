@@ -17,16 +17,16 @@ import {
   Screen,
   ScreenHeader,
   TextField,
-} from "../../src/components";
-import type { PickedQuranReference } from "../../src/components";
-import { MAX_RECITATION_MS } from "../../src/config/recording";
-import { useStudentClasses } from "../../src/features/classes/api";
-import { useCreateRecording } from "../../src/features/recordings/api";
-import { useSession } from "../../src/features/session/auth";
-import { t } from "../../src/i18n/ar";
-import { ensureRecordingReady, formatMillis, setPlaybackMode } from "../../src/lib/audio";
-import { spacing, useColors } from "../../src/theme";
-import type { RecordingRefType } from "../../src/types/database";
+} from "../../../src/components";
+import type { PickedQuranReference } from "../../../src/components";
+import { MAX_RECITATION_MS } from "../../../src/config/recording";
+import { useStudentClasses } from "../../../src/features/classes/api";
+import { useCreateRecording } from "../../../src/features/recordings/api";
+import { useSession } from "../../../src/features/session/auth";
+import { t } from "../../../src/i18n/ar";
+import { ensureRecordingReady, formatMillis, setPlaybackMode } from "../../../src/lib/audio";
+import { spacing, useColors } from "../../../src/theme";
+import type { RecordingRefType } from "../../../src/types/database";
 
 export default function RecordScreen() {
   const router = useRouter();
