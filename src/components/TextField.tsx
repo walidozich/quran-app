@@ -11,6 +11,7 @@ type Props = {
   autoCapitalize?: "none" | "sentences";
   secureTextEntry?: boolean;
   keyboardType?: "default" | "email-address" | "numeric" | "number-pad";
+  multiline?: boolean;
 };
 
 export function TextField({
@@ -21,6 +22,7 @@ export function TextField({
   autoCapitalize = "sentences",
   secureTextEntry,
   keyboardType = "default",
+  multiline = false,
 }: Props) {
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -39,7 +41,8 @@ export function TextField({
         autoCapitalize={autoCapitalize}
         secureTextEntry={secureTextEntry}
         keyboardType={keyboardType}
-        style={styles.input}
+        multiline={multiline}
+        style={[styles.input, multiline ? styles.multiline : null]}
       />
     </View>
   );
@@ -68,5 +71,9 @@ const makeStyles = (colors: ColorScheme) =>
       textAlign: "right",
       writingDirection: "rtl",
       includeFontPadding: true,
+    },
+    multiline: {
+      minHeight: 90,
+      textAlignVertical: "top",
     },
   });
