@@ -1,3 +1,4 @@
+import { Amiri_400Regular, Amiri_700Bold } from "@expo-google-fonts/amiri";
 import { AmiriQuran_400Regular, useFonts } from "@expo-google-fonts/amiri-quran";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
@@ -25,8 +26,11 @@ I18nManager.forceRTL(true);
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
-  // Amiri Quran ships a single weight; hierarchy comes from size/color, not weight.
+  // Amiri (400 + 700) drives the UI so we get real bold hierarchy; Amiri Quran is
+  // kept for actual Quranic/ayah text (variant="quran").
   const [fontsLoaded] = useFonts({
+    Amiri_400Regular,
+    Amiri_700Bold,
     AmiriQuran_400Regular,
   });
 
