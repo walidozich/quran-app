@@ -3,7 +3,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AccountIcon, HomeIcon, StatsIcon, StudyIcon } from "../../src/components/TabBarIcon";
 import { useAuth } from "../../src/features/session/auth";
 import { t } from "../../src/i18n/ar";
-import { fonts, useColors } from "../../src/theme";
+import { useColors } from "../../src/theme";
+import { tabScreenOptions } from "../../src/theme/tabBar";
 
 export default function StudentLayout() {
   const { loading, profile } = useAuth();
@@ -14,21 +15,7 @@ export default function StudentLayout() {
   if (profile.role !== "student") return <Redirect href="/(teacher)" />;
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.border,
-          height: 66 + insets.bottom,
-          paddingBottom: insets.bottom + 18,
-          paddingTop: 10,
-        },
-        tabBarLabelStyle: { fontFamily: fonts.regular, fontSize: 11 },
-      }}
-    >
+    <Tabs screenOptions={tabScreenOptions(colors, insets.bottom)}>
       <Tabs.Screen
         name="(home)"
         options={{ title: t("tabs.home"), tabBarIcon: ({ color }) => <HomeIcon color={color} size={22} /> }}

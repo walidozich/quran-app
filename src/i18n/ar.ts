@@ -108,7 +108,6 @@ export const ar = {
   },
   teacherHome: {
     title: "لوحة المعلّم",
-    manageClass: "إدارة الصفوف",
     queue: "تسجيلات الطلاب",
     noQueue: "لا توجد تسجيلات بعد",
     by: "الطالب",
@@ -163,7 +162,6 @@ export const ar = {
     teacher: "المعلّم",
     noClass: "لم تنضم إلى أي صف بعد",
     newRecording: "تسجيل تلاوة جديدة",
-    recordHere: "تسجيل في هذا الصف",
     myRecordings: "تسجيلاتي",
     noRecordings: "لا توجد تسجيلات بعد",
   },
