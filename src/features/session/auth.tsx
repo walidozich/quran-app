@@ -148,7 +148,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setEmail(mail);
           return;
         }
-        if (session) await loadProfile(session.user.id);
+        // Read the session directly — right after sign-in the `session` state hasn't
+        // been updated by onAuthStateChange yet, so relying on it would skip the
+        // profile load and the index gate would bounce back to sign-in.
+        const { data } = await supabase.auth.getSession();
+        const user = data.session?.user;
+        if (user) {
+          setEmail(user.email ?? null);
+          await loadProfile(user.id);
+        }
       },
       updateProfile: async ({ fullName, whatsapp, email: newEmail }: ProfileUpdate) => {
         if (USE_LOCAL_BACKEND) {
