@@ -34,30 +34,31 @@ export type ColorScheme = Record<keyof typeof lightColors, string>;
 export type ColorKey = keyof typeof lightColors;
 
 export const darkColors: ColorScheme = {
-  primary: "#1E8E76", // emerald, deep enough for white text on buttons
-  primaryDark: "#176B59",
-  primaryDeep: "#0B3A30",
-  primarySoft: "#15302A",
+  // Warm charcoal: brown-charcoal surfaces, parchment text, emerald + gold accents.
+  primary: "#2BA088", // emerald, pops on the warm dark
+  primaryDark: "#21806C",
+  primaryDeep: "#103B31",
+  primarySoft: "#23291F", // warm soft tint for cards/badges
 
-  accent: "#E3BC52", // brighter gold
-  accentSoft: "#EBD9A0", // light gold — used as text on the emerald gradient
-  accentMuted: "#5A5230",
+  accent: "#E8C45E", // gold
+  accentSoft: "#F0DCA0", // light gold — text on the emerald gradient
+  accentMuted: "#4E4326",
 
-  background: "#0F1714", // deep green-black
-  surface: "#18221E",
+  background: "#14110D", // warm near-black
+  surface: "#211C16",
 
-  text: "#ECF2EF",
-  textMuted: "#9BA8A2",
+  text: "#F2ECE0", // parchment
+  textMuted: "#A89C86",
   textOnPrimary: "#FFFFFF",
 
-  border: "#2A352F",
+  border: "#38301F",
 
   success: "#3FAE84",
-  warning: "#D9A521",
+  warning: "#E0A93A",
   danger: "#E0655E",
 
-  statusPending: "#D9A521",
-  statusDraft: "#9BA8A2",
+  statusPending: "#E0A93A",
+  statusDraft: "#A89C86",
   statusReviewed: "#3FAE84",
 };
 
