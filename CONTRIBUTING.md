@@ -54,4 +54,8 @@ CI runs both on every PR.
 ## Where things live
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the design, data model, and screen map.
 
-By contributing you agree your work is licensed under the project's [MIT License](LICENSE).
+## A charity project — non-commercial only
+This app is a **sadaqah (صدقة جارية)**: it exists for good deeds, not money. Under the
+[PolyForm Noncommercial License](LICENSE), **commercial use is not allowed** — no selling, charging,
+paywalls, or advertising/monetization. Please keep contributions in that spirit: free for everyone.
+By contributing, you agree your work is released under that same license.

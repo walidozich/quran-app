@@ -2,6 +2,12 @@
 
 An Arabic, right-to-left mobile app where **students record Quran recitations** and **teachers review them with timestamped annotations** — pinning a voice correction, a text comment, and tags to the exact moment of each mistake. Teachers also **assign wirds (أوراد)** — Quran portions to recite — and track each student's progress. Students consume feedback in context, filter their mistakes by tag, and respond with new attempts that form a review thread.
 
+> ## ❤️ A charity project — free forever, never for profit
+> This is built as a **sadaqah (صدقة جارية)** — for good deeds, not money. Under the
+> [PolyForm Noncommercial License](LICENSE), **any commercial use is strictly not allowed**:
+> no selling, no charging for access, no paywalls, and **no advertising or monetization** of any kind.
+> Use it, fork it, improve it, and share it freely — for free. Keep it that way. 🤲
+
 > **Status:** Runs against **cloud Supabase** (supabase.com) — Postgres + Storage + Auth + RLS — so phones share one backend over the internet (no same-Wi-Fi requirement). Distributed as an **installable Android APK** (`./build-apk.sh`). A fully on-device mode and a self-hosted local Supabase are kept as fallbacks behind flags/env. Source of truth: `spec.md`; plan: `todo.md`.
 
 ---
@@ -189,8 +195,9 @@ Contributions are welcome! Please:
 2. Skim **[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)** for the design, data model, and screen map.
 3. Before a PR: `npx tsc --noEmit` and `npx expo export --platform android` must pass (CI enforces this).
 
-By participating you agree to the [Code of Conduct](CODE_OF_CONDUCT.md). Report vulnerabilities
-privately per [`SECURITY.md`](SECURITY.md). Licensed under [MIT](LICENSE).
+By participating you agree to the [Code of Conduct](CODE_OF_CONDUCT.md) and that your contributions
+are released under the project's [PolyForm Noncommercial License](LICENSE) — i.e. **non-commercial use
+only** (no selling, paywalls, or ads). Report vulnerabilities privately per [`SECURITY.md`](SECURITY.md).
 
 > The `.env` in this repo (gitignored) points at the maintainer's backend — contributors run against
 > their **own** Supabase project, so you don't need any of the maintainer's keys.
