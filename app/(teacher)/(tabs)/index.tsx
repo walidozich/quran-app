@@ -1,10 +1,10 @@
 import { useRouter } from "expo-router";
 import { ActivityIndicator, Pressable, View } from "react-native";
-import { AppText, Button, Card, EmptyState, ErrorState, Screen, ScreenHeader } from "../../src/components";
-import { useTeacherClasses } from "../../src/features/classes/api";
-import { useSession } from "../../src/features/session/auth";
-import { t } from "../../src/i18n/ar";
-import { useColors } from "../../src/theme";
+import { AppText, Card, EmptyState, ErrorState, Screen, ScreenHeader } from "../../../src/components";
+import { useTeacherClasses } from "../../../src/features/classes/api";
+import { useSession } from "../../../src/features/session/auth";
+import { t } from "../../../src/i18n/ar";
+import { useColors } from "../../../src/theme";
 
 export default function TeacherHome() {
   const router = useRouter();
@@ -16,14 +16,7 @@ export default function TeacherHome() {
 
   return (
     <Screen scroll>
-      <ScreenHeader title={t("teacherHome.title")} subtitle={currentProfile.full_name} menu />
-
-      <Button label={t("teacherHome.manageClass")} onPress={() => router.push("/(teacher)/manage-class")} />
-      <Button
-        label={t("dashboard.open")}
-        variant="secondary"
-        onPress={() => router.push("/(teacher)/dashboard")}
-      />
+      <ScreenHeader title={t("teacherHome.title")} subtitle={currentProfile.full_name} back={false} />
 
       <AppText variant="subheading">{t("classes.myClasses")}</AppText>
       {isLoading ? (

@@ -45,39 +45,9 @@ export function ScreenHeader({ title, subtitle, back, menu, reload = true, bell 
 
   return (
     <View style={styles.wrap}>
+      {/* Physical layout (forced LTR): actions on the left, title flush right,
+          back/menu on the far right — independent of the global RTL flag. */}
       <View style={styles.row}>
-        {menu ? (
-          <Pressable
-            onPress={drawer.open}
-            hitSlop={10}
-            accessibilityRole="button"
-            accessibilityLabel={t("drawer.menu")}
-            style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
-          >
-            <MenuIcon color={colors.primary} />
-          </Pressable>
-        ) : showBack ? (
-          <Pressable
-            onPress={goBack}
-            hitSlop={10}
-            accessibilityRole="button"
-            accessibilityLabel={t("common.back")}
-            style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
-          >
-            {/* RTL: the previous screen is to the right, so "back" points right. */}
-            <BackIcon color={colors.primary} />
-          </Pressable>
-        ) : null}
-
-        <View style={styles.titleCol}>
-          <AppText variant="title">{title}</AppText>
-          {subtitle ? (
-            <AppText variant="subheading" color={colors.textMuted}>
-              {subtitle}
-            </AppText>
-          ) : null}
-        </View>
-
         {showBell ? (
           <Pressable
             onPress={() => router.push("/notifications")}
@@ -113,6 +83,39 @@ export function ScreenHeader({ title, subtitle, back, menu, reload = true, bell 
             )}
           </Pressable>
         ) : null}
+
+        <View style={styles.titleCol}>
+          <AppText variant="title" style={styles.titleText}>
+            {title}
+          </AppText>
+          {subtitle ? (
+            <AppText variant="subheading" color={colors.textMuted} style={styles.titleText}>
+              {subtitle}
+            </AppText>
+          ) : null}
+        </View>
+
+        {menu ? (
+          <Pressable
+            onPress={drawer.open}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel={t("drawer.menu")}
+            style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
+          >
+            <MenuIcon color={colors.primary} />
+          </Pressable>
+        ) : showBack ? (
+          <Pressable
+            onPress={goBack}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel={t("common.back")}
+            style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
+          >
+            <BackIcon color={colors.primary} />
+          </Pressable>
+        ) : null}
       </View>
 
       {/* Signature: thin gold rule with a centered diamond (mushaf illumination). */}
@@ -132,13 +135,18 @@ const makeStyles = (colors: ColorScheme) =>
     },
     row: {
       flexDirection: "row",
-      alignItems: "flex-start",
+      alignItems: "center",
       gap: spacing.sm,
+      // Force LTR + physical order so the title is always flush right and the
+      // action buttons on the left, regardless of the native RTL flag.
+      direction: "ltr",
     },
     titleCol: {
       flex: 1,
       gap: spacing.xs,
-      paddingTop: spacing.xs,
+    },
+    titleText: {
+      textAlign: "right",
     },
     iconBtn: {
       width: 40,

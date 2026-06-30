@@ -26,6 +26,13 @@ export const ar = {
     teacher: "معلّم",
     student: "طالب",
   },
+  tabs: {
+    home: "الرئيسية",
+    stats: "إحصاءات",
+    study: "ادرس",
+    manage: "إدارة",
+    account: "حسابي",
+  },
   auth: {
     signInTitle: "تسجيل الدخول",
     signUpTitle: "إنشاء حساب جديد",

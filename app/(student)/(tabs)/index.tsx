@@ -1,10 +1,10 @@
 import { useRouter } from "expo-router";
 import { ActivityIndicator, Pressable, View } from "react-native";
-import { AppText, Button, Card, EmptyState, ErrorState, Screen, ScreenHeader } from "../../src/components";
-import { useStudentClasses } from "../../src/features/classes/api";
-import { useSession } from "../../src/features/session/auth";
-import { t } from "../../src/i18n/ar";
-import { useColors } from "../../src/theme";
+import { AppText, Button, Card, EmptyState, ErrorState, Screen, ScreenHeader } from "../../../src/components";
+import { useStudentClasses } from "../../../src/features/classes/api";
+import { useSession } from "../../../src/features/session/auth";
+import { t } from "../../../src/i18n/ar";
+import { useColors } from "../../../src/theme";
 
 export default function StudentHome() {
   const router = useRouter();
@@ -16,22 +16,12 @@ export default function StudentHome() {
 
   return (
     <Screen scroll>
-      <ScreenHeader title={t("studentHome.title")} subtitle={currentProfile.full_name} menu />
+      <ScreenHeader title={t("studentHome.title")} subtitle={currentProfile.full_name} back={false} />
 
       <Button
         label={hasClasses ? t("studentHome.joinAnother") : t("studentHome.joinClass")}
         variant={hasClasses ? "secondary" : "primary"}
         onPress={() => router.push("/(student)/join-class")}
-      />
-      <Button
-        label={t("studentHome.studyByTag")}
-        variant="secondary"
-        onPress={() => router.push("/(student)/study")}
-      />
-      <Button
-        label={t("dashboard.open")}
-        variant="secondary"
-        onPress={() => router.push("/(student)/dashboard")}
       />
 
       <AppText variant="subheading">{t("studentHome.myClasses")}</AppText>

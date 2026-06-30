@@ -10,20 +10,20 @@ import {
   Screen,
   ScreenHeader,
   StatTile,
-} from "../../src/components";
-import { useStudentClasses } from "../../src/features/classes/api";
-import { useStudentRecordings } from "../../src/features/recordings/api";
-import { useSession } from "../../src/features/session/auth";
+} from "../../../src/components";
+import { useStudentClasses } from "../../../src/features/classes/api";
+import { useStudentRecordings } from "../../../src/features/recordings/api";
+import { useSession } from "../../../src/features/session/auth";
 import {
   coverageStats,
   mostRecitedSurahs,
   statusCounts,
   surahStruggleMap,
   tagFrequency,
-} from "../../src/features/stats/aggregate";
-import { useStudentAnnotations } from "../../src/features/tags/studyByTag";
-import { t } from "../../src/i18n/ar";
-import { spacing, useColors } from "../../src/theme";
+} from "../../../src/features/stats/aggregate";
+import { useStudentAnnotations } from "../../../src/features/tags/studyByTag";
+import { t } from "../../../src/i18n/ar";
+import { spacing, useColors } from "../../../src/theme";
 
 export default function StudentDashboard() {
   const colors = useColors();
