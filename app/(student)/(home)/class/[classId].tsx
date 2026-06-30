@@ -1,4 +1,5 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useMemo } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { AppText, Badge, Button, Card, EmptyState, ErrorState, Screen, ScreenHeader } from "../../../../src/components";
 import { BadgeStatus } from "../../../../src/components/Badge";
@@ -6,13 +7,36 @@ import { useStudentClasses } from "../../../../src/features/classes/api";
 import { useStudentRecordings } from "../../../../src/features/recordings/api";
 import { buildThreads } from "../../../../src/features/recordings/threads";
 import { useSession } from "../../../../src/features/session/auth";
+import { useClassWirds, useWirdCompletions } from "../../../../src/features/wirds/api";
+import { isOverdue, WirdStatus, wirdRefLabel, wirdStatusFor } from "../../../../src/features/wirds/format";
 import { t } from "../../../../src/i18n/ar";
-import { RecordingStatus } from "../../../../src/types/database";
+import { formatDateTime } from "../../../../src/lib/datetime";
+import { RecordingStatus, Wird } from "../../../../src/types/database";
 import { useColors } from "../../../../src/theme";
 
 function studentBadge(status: RecordingStatus): { status: BadgeStatus; label: string } {
   if (status === "reviewed") return { status: "reviewed", label: t("status.reviewed") };
   return { status: "pending", label: t("status.pending") };
+}
+
+function wirdBadge(s: WirdStatus): { status: BadgeStatus; label: string } {
+  if (s === "done") return { status: "reviewed", label: t("wird.statusDone") };
+  if (s === "reviewed") return { status: "reviewed", label: t("wird.statusReviewed") };
+  if (s === "submitted") return { status: "draft", label: t("wird.statusSubmitted") };
+  return { status: "pending", label: t("wird.statusNew") };
+}
+
+/** Route to the record screen, pre-filled and linked to this wird. */
+function recordWirdUrl(w: Wird): string {
+  const params = new URLSearchParams({ classId: w.class_id, label: wirdRefLabel(w), wird_id: w.id });
+  if (w.ref_type) {
+    params.set("ref_type", w.ref_type);
+    for (const k of ["surah_start", "ayah_start", "surah_end", "ayah_end", "page_start", "page_end"] as const) {
+      const v = w[k];
+      if (v != null) params.set(k, String(v));
+    }
+  }
+  return `/(student)/record?${params.toString()}`;
 }
 
 export default function StudentClass() {
@@ -26,12 +50,51 @@ export default function StudentClass() {
   const cls = classes?.find((c) => c.id === classId) ?? null;
   const threads = buildThreads((recordings ?? []).filter((r) => r.class_id === classId));
 
+  // --- wirds assigned to me in this class (RLS already scopes class-wide + own) ---
+  const { data: wirds = [] } = useClassWirds(classId);
+  const wirdIds = useMemo(() => wirds.map((w) => w.id), [wirds]);
+  const { data: completions = [] } = useWirdCompletions(wirdIds);
+  const myCompleted = useMemo(
+    () => new Set(completions.filter((c) => c.student_id === currentProfile.id).map((c) => c.wird_id)),
+    [completions, currentProfile.id]
+  );
+
   return (
     <Screen scroll>
       <ScreenHeader
         title={cls?.name ?? t("studentHome.yourClass")}
         subtitle={cls?.teacher ? `${t("studentHome.teacher")}: ${cls.teacher.full_name}` : undefined}
       />
+
+      {/* Assigned wirds */}
+      {wirds.length > 0 ? (
+        <>
+          <AppText variant="subheading">{t("wird.section")}</AppText>
+          {wirds.map((w) => {
+            const status = wirdStatusFor(w.id, recordings ?? [], myCompleted.has(w.id));
+            const badge = wirdBadge(status);
+            const overdue = isOverdue(w.due_at) && status !== "done";
+            return (
+              <Card key={w.id}>
+                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                  <AppText variant="heading">{wirdRefLabel(w)}</AppText>
+                  <Badge label={badge.label} status={badge.status} />
+                </View>
+                {w.note ? <AppText variant="body">{w.note}</AppText> : null}
+                {w.due_at ? (
+                  <AppText variant="caption" color={overdue ? colors.danger : colors.textMuted}>
+                    {t("wird.dueLabel")}: {formatDateTime(w.due_at)}
+                    {overdue ? ` · ${t("wird.overdue")}` : ""}
+                  </AppText>
+                ) : null}
+                {status !== "done" ? (
+                  <Button label={t("wird.record")} onPress={() => router.push(recordWirdUrl(w) as never)} />
+                ) : null}
+              </Card>
+            );
+          })}
+        </>
+      ) : null}
 
       <Button
         label={t("studentHome.newRecording")}

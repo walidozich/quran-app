@@ -34,6 +34,7 @@ export default function RecordScreen() {
     respondsTo,
     label: inheritedLabel,
     classId,
+    wird_id,
     ref_type,
     surah_start,
     ayah_start,
@@ -45,6 +46,7 @@ export default function RecordScreen() {
     respondsTo?: string;
     label?: string;
     classId?: string;
+    wird_id?: string;
     ref_type?: RecordingRefType;
     surah_start?: string;
     ayah_start?: string;
@@ -136,6 +138,7 @@ export default function RecordScreen() {
         localUri: recordedUri,
         durationMs,
         respondsToId: respondsTo ?? null,
+        wirdId: wird_id ?? null,
         studentName: currentProfile.full_name,
         ref_type: quranReference?.ref_type ?? null,
         surah_start: quranReference?.surah_start ?? null,

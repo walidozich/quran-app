@@ -21,3 +21,22 @@ export function wirdRefLabel(w: Pick<Wird,
 export function isOverdue(dueAt: string | null): boolean {
   return Boolean(dueAt) && new Date(dueAt as string).getTime() < Date.now();
 }
+
+export type WirdStatus = "new" | "submitted" | "reviewed" | "done";
+
+/**
+ * Derive a student's status for a wird: done (teacher-marked) > reviewed >
+ * submitted (has a linked recording) > new. `recordings` should already be the
+ * student's recordings; only those linked to this wird are considered.
+ */
+export function wirdStatusFor(
+  wirdId: string,
+  recordings: { wird_id?: string | null; status: string; created_at: string }[],
+  isComplete: boolean
+): WirdStatus {
+  if (isComplete) return "done";
+  const linked = recordings.filter((r) => r.wird_id === wirdId);
+  if (linked.length === 0) return "new";
+  const latest = linked.reduce((a, b) => (a.created_at >= b.created_at ? a : b));
+  return latest.status === "reviewed" ? "reviewed" : "submitted";
+}
