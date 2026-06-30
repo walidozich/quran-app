@@ -19,6 +19,7 @@ import {
 } from "../../../../src/features/recordings/api";
 import { useSession } from "../../../../src/features/session/auth";
 import { useCreateTag, useTags } from "../../../../src/features/tags/useTags";
+import { useSetWirdComplete, useWirdCompletions } from "../../../../src/features/wirds/api";
 import { t } from "../../../../src/i18n/ar";
 import { formatDateTime } from "../../../../src/lib/datetime";
 import { spacing, useColors } from "../../../../src/theme";
@@ -39,6 +40,23 @@ export default function ReviewScreen() {
   const deleteAnnotation = useDeleteAnnotation(recordingId);
   const createTag = useCreateTag(currentProfile.id);
   const setStatus = useSetRecordingStatus();
+
+  // Wird completion (when this recording fulfills an assigned wird).
+  const wirdId = recording?.wird_id ?? null;
+  const { data: wirdCompletions = [] } = useWirdCompletions(wirdId ? [wirdId] : []);
+  const wirdComplete = Boolean(
+    wirdId && recording && wirdCompletions.some((c) => c.wird_id === wirdId && c.student_id === recording.student_id)
+  );
+  const setWirdComplete = useSetWirdComplete();
+  const toggleWirdComplete = () => {
+    if (!wirdId || !recording) return;
+    setWirdComplete.mutate({
+      wirdId,
+      studentId: recording.student_id,
+      teacherId: currentProfile.id,
+      completed: !wirdComplete,
+    });
+  };
 
   const currentMsRef = useRef(0);
   const onPosition = useCallback((ms: number) => {
@@ -190,6 +208,25 @@ export default function ReviewScreen() {
           </>
         )}
       </Card>
+
+      {wirdId ? (
+        <Card style={{ borderColor: wirdComplete ? colors.success : colors.border }}>
+          <AppText variant="subheading" color={colors.primary}>
+            {t("wird.section")}
+          </AppText>
+          {wirdComplete ? (
+            <AppText variant="caption" color={colors.success}>
+              {t("wird.statusDone")} ✓
+            </AppText>
+          ) : null}
+          <Button
+            label={wirdComplete ? t("wird.markUndone") : t("wird.markDone")}
+            variant={wirdComplete ? "ghost" : "primary"}
+            onPress={toggleWirdComplete}
+            loading={setWirdComplete.isPending}
+          />
+        </Card>
+      ) : null}
 
       <AppText variant="subheading">{t("review.annotations")}</AppText>
       {annotations && annotations.length > 0 ? (
