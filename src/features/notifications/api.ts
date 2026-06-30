@@ -65,8 +65,23 @@ export function useMarkAllRead(userId: string) {
       if (error) throw error;
     },
     onSuccess: () => {
-      // Clear the badge, but leave the open list's unread highlight intact while
-      // the user is reading it (it refreshes on the next visit).
+      qc.invalidateQueries({ queryKey: notificationKeys.list(userId) });
+      qc.invalidateQueries({ queryKey: notificationKeys.unread(userId) });
+    },
+  });
+}
+
+/** Mark a single notification as read. */
+export function useMarkRead(userId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string): Promise<void> => {
+      if (USE_LOCAL_BACKEND) return;
+      const { error } = await supabase.from("notifications").update({ read: true }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: notificationKeys.list(userId) });
       qc.invalidateQueries({ queryKey: notificationKeys.unread(userId) });
     },
   });

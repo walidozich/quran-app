@@ -1,8 +1,12 @@
 import { useRouter } from "expo-router";
-import { useEffect } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
-import { AppText, Card, EmptyState, Screen, ScreenHeader } from "../src/components";
-import { NotificationItem, useMarkAllRead, useNotifications } from "../src/features/notifications/api";
+import { AppText, Button, Card, EmptyState, Screen, ScreenHeader } from "../src/components";
+import {
+  NotificationItem,
+  useMarkAllRead,
+  useMarkRead,
+  useNotifications,
+} from "../src/features/notifications/api";
 import { useAuth } from "../src/features/session/auth";
 import { t } from "../src/i18n/ar";
 import { spacing, useColors } from "../src/theme";
@@ -22,14 +26,12 @@ export default function NotificationsScreen() {
   const userId = profile?.id ?? "";
   const { data: items = [], isLoading } = useNotifications(userId);
   const markAllRead = useMarkAllRead(userId);
+  const markRead = useMarkRead(userId);
 
-  // Opening the center clears the unread badge.
-  useEffect(() => {
-    if (userId) markAllRead.mutate();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  const hasUnread = items.some((n) => !n.read);
 
   const open = (n: NotificationItem) => {
+    if (!n.read) markRead.mutate(n.id);
     if (!n.recording_id || !profile) return;
     const path =
       profile.role === "teacher"
@@ -42,13 +44,22 @@ export default function NotificationsScreen() {
     <Screen scroll>
       <ScreenHeader title={t("notifCenter.title")} bell={false} reload={false} />
 
+      {hasUnread ? (
+        <Button
+          label={t("notifCenter.markAllRead")}
+          variant="secondary"
+          onPress={() => markAllRead.mutate()}
+          loading={markAllRead.isPending}
+        />
+      ) : null}
+
       {isLoading ? (
         <ActivityIndicator color={colors.primary} />
       ) : items.length === 0 ? (
         <EmptyState message={t("notifCenter.empty")} />
       ) : (
         items.map((n) => (
-          <Pressable key={n.id} onPress={() => open(n)} disabled={!n.recording_id}>
+          <Pressable key={n.id} onPress={() => open(n)}>
             <Card style={!n.read ? { borderColor: colors.primary, borderWidth: 1.5 } : undefined}>
               <View style={styles.titleRow}>
                 {!n.read ? <View style={[styles.dot, { backgroundColor: colors.primary }]} /> : null}
