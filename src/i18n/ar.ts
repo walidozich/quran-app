@@ -166,10 +166,8 @@ export const ar = {
     recordHere: "تسجيل في هذا الصف",
     myRecordings: "تسجيلاتي",
     noRecordings: "لا توجد تسجيلات بعد",
-    studyByTag: "ادرس حسب الوسم",
   },
   dashboard: {
-    open: "الإحصاءات",
     titleTeacher: "إحصاءات الصفوف",
     titleStudent: "إحصاءاتي",
     classes: "الصفوف",
@@ -193,7 +191,6 @@ export const ar = {
     total: "الإجمالي",
   },
   drawer: {
-    menu: "القائمة",
     account: "الحساب",
     settings: "الإعدادات",
     darkMode: "الوضع الليلي",

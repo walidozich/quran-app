@@ -4,7 +4,6 @@ import { useMemo } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import { useUnreadCount } from "../features/notifications/api";
-import { useDrawer } from "../features/drawer/Drawer";
 import { useAuth } from "../features/session/auth";
 import { t } from "../i18n/ar";
 import { ColorScheme, radius, spacing, useColors } from "../theme";
@@ -15,8 +14,6 @@ type Props = {
   subtitle?: string;
   /** Show a back arrow (RTL → points right). Defaults to true when navigation can go back. */
   back?: boolean;
-  /** Show a menu (hamburger) that opens the drawer — use on root screens. */
-  menu?: boolean;
   /** Hide the reload button on screens where it isn't useful. */
   reload?: boolean;
   /** Hide the notification bell (e.g. on the notifications screen itself). */
@@ -24,17 +21,16 @@ type Props = {
 };
 
 /**
- * App bar: a leading control (menu on roots, back elsewhere) + title + manual
- * reload, closed by a thin gold "illumination" rule — the app's signature.
+ * App bar: actions on the left, title on the right, back arrow when navigable,
+ * closed by a thin gold "illumination" rule — the app's signature.
  */
-export function ScreenHeader({ title, subtitle, back, menu, reload = true, bell = true }: Props) {
+export function ScreenHeader({ title, subtitle, back, reload = true, bell = true }: Props) {
   const router = useRouter();
-  const drawer = useDrawer();
   const qc = useQueryClient();
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const fetching = useIsFetching() > 0;
-  const showBack = !menu && (back ?? router.canGoBack());
+  const showBack = back ?? router.canGoBack();
   const { profile } = useAuth();
   const { data: unread = 0 } = useUnreadCount(profile?.id);
   const showBell = bell && Boolean(profile);
@@ -95,17 +91,7 @@ export function ScreenHeader({ title, subtitle, back, menu, reload = true, bell 
           ) : null}
         </View>
 
-        {menu ? (
-          <Pressable
-            onPress={drawer.open}
-            hitSlop={10}
-            accessibilityRole="button"
-            accessibilityLabel={t("drawer.menu")}
-            style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
-          >
-            <MenuIcon color={colors.primary} />
-          </Pressable>
-        ) : showBack ? (
+        {showBack ? (
           <Pressable
             onPress={goBack}
             hitSlop={10}
@@ -203,14 +189,6 @@ const makeStyles = (colors: ColorScheme) =>
       transform: [{ rotate: "45deg" }],
     },
   });
-
-function MenuIcon({ color }: { color: string }) {
-  return (
-    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-      <Path d="M5 7h14M5 12h14M5 17h14" stroke={color} strokeWidth={2.25} strokeLinecap="round" />
-    </Svg>
-  );
-}
 
 function BackIcon({ color }: { color: string }) {
   return (

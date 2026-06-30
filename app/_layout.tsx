@@ -8,7 +8,6 @@ import { useEffect, useState } from "react";
 import { I18nManager } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { BrandSplash } from "../src/components";
-import { DrawerProvider } from "../src/features/drawer/Drawer";
 import { AuthProvider, useAuth } from "../src/features/session/auth";
 import { useAppBadge, useNotificationRouting } from "../src/features/notifications/useNotificationRouting";
 import { useUnreadCount } from "../src/features/notifications/api";
@@ -48,9 +47,7 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <SafeAreaProvider>
-            <DrawerProvider>
-              <Chrome fontsLoaded={fontsLoaded} />
-            </DrawerProvider>
+            <Chrome fontsLoaded={fontsLoaded} />
           </SafeAreaProvider>
         </AuthProvider>
       </QueryClientProvider>
