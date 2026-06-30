@@ -49,7 +49,7 @@ export function Button({ label, onPress, variant = "primary", disabled, loading,
 const makeStyles = (colors: ColorScheme) =>
   StyleSheet.create({
     base: {
-      minHeight: 52,
+      minHeight: 46,
       borderRadius: radius.md,
       paddingHorizontal: spacing.lg,
       alignItems: "center",

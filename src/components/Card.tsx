@@ -17,11 +17,11 @@ const makeStyles = (colors: ColorScheme) =>
   StyleSheet.create({
     card: {
       backgroundColor: colors.surface,
-      borderRadius: radius.lg,
-      padding: spacing.lg,
+      borderRadius: radius.md,
+      padding: spacing.md,
       borderWidth: 1,
       borderColor: colors.border,
-      gap: spacing.sm,
+      gap: spacing.xs,
       shadowColor: "#000",
       shadowOpacity: 0.04,
       shadowRadius: 8,

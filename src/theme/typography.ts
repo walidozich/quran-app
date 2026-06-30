@@ -12,32 +12,32 @@ export const fonts = {
 export const textStyles = {
   title: {
     fontFamily: fonts.bold,
-    fontSize: 26,
-    lineHeight: 52,
+    fontSize: 24,
+    lineHeight: 42,
   },
   heading: {
     fontFamily: fonts.bold,
-    fontSize: 20,
-    lineHeight: 42,
+    fontSize: 19,
+    lineHeight: 34,
   },
   subheading: {
     fontFamily: fonts.medium,
-    fontSize: 16,
-    lineHeight: 36,
+    fontSize: 15,
+    lineHeight: 29,
   },
   body: {
     fontFamily: fonts.regular,
-    fontSize: 15,
-    lineHeight: 34,
+    fontSize: 14,
+    lineHeight: 28,
   },
   caption: {
     fontFamily: fonts.regular,
-    fontSize: 13,
-    lineHeight: 30,
+    fontSize: 12,
+    lineHeight: 24,
   },
   button: {
     fontFamily: fonts.bold,
-    fontSize: 16,
-    lineHeight: 34,
+    fontSize: 15,
+    lineHeight: 28,
   },
 } satisfies Record<string, TextStyle>;

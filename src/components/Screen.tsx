@@ -40,7 +40,7 @@ const makeStyles = (colors: ColorScheme) =>
     },
     content: {
       flex: 1,
-      padding: spacing.lg,
-      gap: spacing.md,
+      padding: spacing.md,
+      gap: spacing.sm,
     },
   });

@@ -21,7 +21,7 @@ export function AppText({ variant = "body", color, style, ...rest }: Props) {
           textAlign: "right",
           writingDirection: "rtl",
           includeFontPadding: true,
-          paddingBottom: 2,
+          paddingBottom: 5,
         },
         style,
       ]}
