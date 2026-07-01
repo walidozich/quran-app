@@ -1,11 +1,11 @@
 import { TextStyle } from "react-native";
 
-// UI text uses Amiri (real 400 + 700 weights → proper bold hierarchy).
+// UI text uses Noto Naskh Arabic (clean naskh, correct RN metrics, real weights).
 // Actual Quranic/ayah text uses Amiri Quran (variant="quran").
 export const fonts = {
-  regular: "Amiri_400Regular",
-  medium: "Amiri_400Regular", // Amiri has no medium; 400 is the closest
-  bold: "Amiri_700Bold",
+  regular: "NotoNaskhArabic_400Regular",
+  medium: "NotoNaskhArabic_500Medium",
+  bold: "NotoNaskhArabic_700Bold",
   quran: "AmiriQuran_400Regular",
 } as const;
 

@@ -1,4 +1,8 @@
-import { Amiri_400Regular, Amiri_700Bold } from "@expo-google-fonts/amiri";
+import {
+  NotoNaskhArabic_400Regular,
+  NotoNaskhArabic_500Medium,
+  NotoNaskhArabic_700Bold,
+} from "@expo-google-fonts/noto-naskh-arabic";
 import { AmiriQuran_400Regular, useFonts } from "@expo-google-fonts/amiri-quran";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
@@ -25,11 +29,12 @@ I18nManager.forceRTL(true);
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
-  // Amiri (400 + 700) drives the UI so we get real bold hierarchy; Amiri Quran is
-  // kept for actual Quranic/ayah text (variant="quran").
+  // Noto Naskh Arabic (400/500/700) drives the UI — a clean naskh with correct
+  // metrics (no RN clipping). Amiri Quran is kept for actual ayah text (variant="quran").
   const [fontsLoaded] = useFonts({
-    Amiri_400Regular,
-    Amiri_700Bold,
+    NotoNaskhArabic_400Regular,
+    NotoNaskhArabic_500Medium,
+    NotoNaskhArabic_700Bold,
     AmiriQuran_400Regular,
   });
 
