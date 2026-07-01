@@ -39,6 +39,25 @@ export function useClassWirds(classId: string) {
   });
 }
 
+async function fetchMyWirds(): Promise<Wird[]> {
+  if (USE_LOCAL_BACKEND) return [];
+  const { data, error } = await supabase
+    .from("wirds")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** All wirds visible to the current user (RLS-scoped): a teacher's class wirds, or a student's. */
+export function useMyWirds() {
+  return useQuery({
+    queryKey: ["wirds", "mine"],
+    queryFn: fetchMyWirds,
+    enabled: !USE_LOCAL_BACKEND,
+  });
+}
+
 async function fetchWirdCompletions(wirdIds: string[]): Promise<WirdCompletion[]> {
   if (USE_LOCAL_BACKEND || wirdIds.length === 0) return [];
   const { data, error } = await supabase.from("wird_completions").select("*").in("wird_id", wirdIds);

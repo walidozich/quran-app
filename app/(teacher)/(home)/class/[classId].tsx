@@ -7,7 +7,7 @@ import { useClassMembers, useTeacherClasses } from "../../../../src/features/cla
 import { RecordingWithStudent, useTeacherRecordings } from "../../../../src/features/recordings/api";
 import { buildThreads, Thread } from "../../../../src/features/recordings/threads";
 import { useSession } from "../../../../src/features/session/auth";
-import { useClassWirds, useDeleteWird, useWirdCompletions } from "../../../../src/features/wirds/api";
+import { useClassWirds, useDeleteWird, useSetWirdComplete, useWirdCompletions } from "../../../../src/features/wirds/api";
 import { isOverdue, wirdRefLabel } from "../../../../src/features/wirds/format";
 import { WirdForm } from "../../../../src/features/wirds/WirdForm";
 import { t } from "../../../../src/i18n/ar";
@@ -41,9 +41,23 @@ export default function TeacherClass() {
   const wirdIds = useMemo(() => wirds.map((w) => w.id), [wirds]);
   const { data: completions = [] } = useWirdCompletions(wirdIds);
   const deleteWird = useDeleteWird(classId);
+  const setWirdComplete = useSetWirdComplete();
   const [wirdFormVisible, setWirdFormVisible] = useState(false);
   const [editingWird, setEditingWird] = useState<Wird | null>(null);
   const [formKey, setFormKey] = useState(0); // remount the form fresh on each open
+  const [expandedWird, setExpandedWird] = useState<string | null>(null);
+
+  // Students who have submitted (a recording linked to the wird), per wird.
+  const submittedByWird = useMemo(() => {
+    const m = new Map<string, Set<string>>();
+    for (const r of recordings ?? []) {
+      if (!r.wird_id) continue;
+      const set = m.get(r.wird_id) ?? new Set<string>();
+      set.add(r.student_id);
+      m.set(r.wird_id, set);
+    }
+    return m;
+  }, [recordings]);
 
   const completedCountByWird = useMemo(() => {
     const m = new Map<string, Set<string>>();
@@ -121,9 +135,53 @@ export default function TeacherClass() {
                   {t("wird.target")}: {targetName}
                   {w.due_at ? ` · ${t("wird.dueLabel")}: ${formatDateTime(w.due_at)}` : ""}
                 </AppText>
-                <AppText variant="caption" color={colors.primary}>
-                  {t("wird.progress")}: {completed}/{targetCount}
-                </AppText>
+                <Pressable onPress={() => setExpandedWird(expandedWird === w.id ? null : w.id)} hitSlop={6}>
+                  <AppText variant="caption" color={colors.primary}>
+                    {expandedWird === w.id ? "▾" : "▸"} {t("wird.students")} — {t("wird.progress")}: {completed}/{targetCount}
+                  </AppText>
+                </Pressable>
+
+                {expandedWird === w.id ? (
+                  <View style={{ gap: spacing.xs, marginTop: spacing.xs }}>
+                    {(w.student_id ? members.filter((m) => m.student.id === w.student_id) : members).map((m) => {
+                      const done = completedCountByWird.get(w.id)?.has(m.student.id) ?? false;
+                      const submitted = submittedByWird.get(w.id)?.has(m.student.id) ?? false;
+                      const statusLabel = done
+                        ? t("wird.statusDone")
+                        : submitted
+                          ? t("wird.statusSubmitted")
+                          : t("wird.statusNew");
+                      return (
+                        <View key={m.student.id} style={styles.studentRow}>
+                          <View style={{ flex: 1 }}>
+                            <AppText variant="body">{m.student.full_name}</AppText>
+                            <AppText variant="caption" color={done ? colors.success : colors.textMuted}>
+                              {statusLabel}
+                            </AppText>
+                          </View>
+                          <Button
+                            label={done ? t("wird.markUndone") : t("wird.markDone")}
+                            variant={done ? "ghost" : "secondary"}
+                            onPress={() =>
+                              setWirdComplete.mutate({
+                                wirdId: w.id,
+                                studentId: m.student.id,
+                                teacherId: currentProfile.id,
+                                completed: !done,
+                              })
+                            }
+                          />
+                        </View>
+                      );
+                    })}
+                    {members.length === 0 ? (
+                      <AppText variant="caption" color={colors.textMuted}>
+                        {t("classes.noMembers")}
+                      </AppText>
+                    ) : null}
+                  </View>
+                ) : null}
+
                 <View style={{ flexDirection: "row", gap: spacing.sm }}>
                   <Button label={t("wird.edit")} variant="ghost" onPress={() => openEdit(w)} style={{ flex: 1 }} />
                   <Button label={t("wird.delete")} variant="ghost" onPress={() => confirmDelete(w)} style={{ flex: 1 }} />
@@ -231,5 +289,14 @@ const makeStyles = (colors: ColorScheme) =>
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+  },
+  studentRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingTop: spacing.xs,
   },
 });

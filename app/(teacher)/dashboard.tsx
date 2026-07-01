@@ -21,6 +21,7 @@ import {
   surahStruggleMap,
   tagFrequency,
 } from "../../src/features/stats/aggregate";
+import { useMyWirds, useWirdCompletions } from "../../src/features/wirds/api";
 import { t } from "../../src/i18n/ar";
 import { spacing, useColors } from "../../src/theme";
 
@@ -30,6 +31,8 @@ export default function TeacherDashboard() {
   const { data: recordings, isLoading: recLoading, isError, refetch } = useTeacherRecordings(currentProfile.id);
   const { data: classes } = useTeacherClasses(currentProfile.id);
   const { data: annotations, isLoading: annLoading } = useTeacherAnnotations(currentProfile.id);
+  const { data: wirds = [] } = useMyWirds();
+  const { data: wirdCompletions = [] } = useWirdCompletions(wirds.map((w) => w.id));
 
   const recs = recordings ?? [];
   const sc = statusCounts(recs);
@@ -53,6 +56,8 @@ export default function TeacherDashboard() {
             <StatTile value={studentCount} label={t("dashboard.students")} tone="accent" />
             <StatTile value={sc.total} label={t("dashboard.recordings")} />
             <StatTile value={sc.pending} label={t("dashboard.pending")} tone="muted" />
+            <StatTile value={wirds.length} label={t("dashboard.wirds")} tone="accent" />
+            <StatTile value={wirdCompletions.length} label={t("dashboard.wirdsDone")} />
           </View>
 
           <Card>

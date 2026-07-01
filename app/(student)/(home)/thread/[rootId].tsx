@@ -76,6 +76,7 @@ function recordAttemptUrl(recording: Recording, label: string): string {
     label,
     classId: recording.class_id,
   });
+  if (recording.wird_id) params.set("wird_id", recording.wird_id);
   appendReferenceParams(params, recording);
   return `/(student)/record?${params.toString()}`;
 }

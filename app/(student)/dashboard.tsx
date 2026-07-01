@@ -22,6 +22,7 @@ import {
   tagFrequency,
 } from "../../src/features/stats/aggregate";
 import { useStudentAnnotations } from "../../src/features/tags/studyByTag";
+import { useMyWirds, useWirdCompletions } from "../../src/features/wirds/api";
 import { t } from "../../src/i18n/ar";
 import { spacing, useColors } from "../../src/theme";
 
@@ -31,6 +32,10 @@ export default function StudentDashboard() {
   const { data: recordings, isLoading: recLoading, isError, refetch } = useStudentRecordings(currentProfile.id);
   const { data: classes } = useStudentClasses(currentProfile.id);
   const { data: annotations, isLoading: annLoading } = useStudentAnnotations(currentProfile.id);
+  const { data: wirds = [] } = useMyWirds();
+  const { data: wirdCompletions = [] } = useWirdCompletions(wirds.map((w) => w.id));
+  const wirdsDone = wirdCompletions.filter((c) => c.student_id === currentProfile.id).length;
+  const wirdsPending = Math.max(0, wirds.length - wirdsDone);
 
   const recs = recordings ?? [];
   const sc = statusCounts(recs);
@@ -56,6 +61,9 @@ export default function StudentDashboard() {
             <StatTile value={sc.reviewed} label={t("dashboard.reviewed")} tone="accent" />
             <StatTile value={awaiting} label={t("dashboard.pending")} tone="muted" />
             <StatTile value={classes?.length ?? 0} label={t("dashboard.classes")} />
+            <StatTile value={wirds.length} label={t("dashboard.wirds")} tone="accent" />
+            <StatTile value={wirdsDone} label={t("dashboard.wirdsDone")} />
+            <StatTile value={wirdsPending} label={t("dashboard.wirdsPending")} tone="muted" />
           </View>
 
           <Card>
