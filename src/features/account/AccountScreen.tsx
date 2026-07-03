@@ -4,6 +4,7 @@ import { AppText, Card, Screen, ScreenHeader } from "../../components";
 import { t } from "../../i18n/ar";
 import { ColorScheme, radius, spacing, useColors, useThemeMode } from "../../theme";
 import { useAuth } from "../session/auth";
+import { profileRole } from "../../types/database";
 
 /** The "account" tab: profile shortcut, settings (theme), and sign-out. */
 export function AccountScreen() {
@@ -11,7 +12,19 @@ export function AccountScreen() {
   const styles = makeStyles(colors);
   const router = useRouter();
   const { mode, toggle } = useThemeMode();
-  const { profile, signOut } = useAuth();
+  const { profile, profiles, signOut, deactivateProfile, mode: uiMode, setMode } = useAuth();
+
+  const switchProfile = () => {
+    // Navigate FIRST, clear state after — clearing while the authenticated
+    // screens are still mounted risks a teardown-frame crash in release.
+    router.replace("/profile-picker");
+    setTimeout(deactivateProfile, 0);
+  };
+
+  const switchMode = () => {
+    setMode(uiMode === "teacher" ? "student" : "teacher");
+    router.replace("/");
+  };
 
   return (
     <Screen scroll>
@@ -21,13 +34,36 @@ export function AccountScreen() {
         <Card style={{ backgroundColor: colors.primarySoft }}>
           <AppText variant="heading">{profile?.full_name ?? "—"}</AppText>
           <AppText variant="caption" color={colors.textMuted}>
-            {profile ? t(`roles.${profile.role}`) : ""}
+            {profile ? t(`roles.${profileRole(profile)}`) : ""}
           </AppText>
           <AppText variant="caption" color={colors.primary}>
             {t("drawer.editProfile")} ‹
           </AppText>
         </Card>
       </Pressable>
+
+      {profile?.is_teacher ? (
+        <Pressable onPress={switchMode}>
+          <Card style={{ backgroundColor: colors.accentSoft }}>
+            <AppText variant="subheading" color={colors.primary}>
+              ⇄ {uiMode === "teacher" ? t("mode.toLearning") : t("mode.toTeaching")}
+            </AppText>
+            <AppText variant="caption" color={colors.textMuted}>
+              {uiMode === "teacher" ? t("mode.teachingHint") : t("mode.learningHint")}
+            </AppText>
+          </Card>
+        </Pressable>
+      ) : null}
+
+      {profiles.length > 0 ? (
+        <Pressable onPress={switchProfile}>
+          <Card>
+            <AppText variant="subheading" color={colors.primary}>
+              {t("picker.switch")} ‹
+            </AppText>
+          </Card>
+        </Pressable>
+      ) : null}
 
       <AppText variant="caption" color={colors.textMuted} style={{ marginTop: spacing.sm }}>
         {t("drawer.settings")}
@@ -44,7 +80,15 @@ export function AccountScreen() {
         </View>
       </Card>
 
-      <Pressable onPress={signOut} style={[styles.logout, { borderColor: colors.danger }]}>
+      <Pressable
+        onPress={() => {
+          // Navigate FIRST so no authenticated screen is mounted when the
+          // session state clears (clearing first crashed release builds).
+          router.replace("/(auth)/sign-in");
+          setTimeout(signOut, 0);
+        }}
+        style={[styles.logout, { borderColor: colors.danger }]}
+      >
         <AppText variant="button" color={colors.danger}>
           {t("auth.signOut")}
         </AppText>

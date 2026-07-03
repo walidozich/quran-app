@@ -7,12 +7,12 @@ import { useColors } from "../../src/theme";
 import { tabScreenOptions } from "../../src/theme/tabBar";
 
 export default function TeacherLayout() {
-  const { loading, profile } = useAuth();
+  const { loading, profile, mode } = useAuth();
   const colors = useColors();
   const insets = useSafeAreaInsets();
   if (loading) return null;
-  if (!profile) return <Redirect href="/(auth)/sign-in" />;
-  if (profile.role !== "teacher") return <Redirect href="/(student)" />;
+  if (!profile) return <Redirect href="/" />;
+  if (!profile.is_teacher || mode !== "teacher") return <Redirect href="/(student)" />;
 
   return (
     <Tabs screenOptions={tabScreenOptions(colors, insets.bottom)}>
