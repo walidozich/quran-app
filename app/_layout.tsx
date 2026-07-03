@@ -66,7 +66,7 @@ function Chrome({ fontsLoaded }: { fontsLoaded: boolean }) {
   const { data: unread = 0 } = useUnreadCount(profile?.id);
   const [splashDone, setSplashDone] = useState(false);
   // Tapping a push notification deep-links to the relevant recording.
-  useNotificationRouting(profile?.role);
+  useNotificationRouting();
   // Mirror the unread count onto the app-icon badge.
   useAppBadge(unread);
   return (

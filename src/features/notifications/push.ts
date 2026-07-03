@@ -1,7 +1,6 @@
 import Constants, { ExecutionEnvironment } from "expo-constants";
 import * as Device from "expo-device";
 import { Platform } from "react-native";
-import { USE_LOCAL_BACKEND } from "../../config/backend";
 import { supabase } from "../../config/supabase";
 
 // Expo Go (SDK 53+) removed remote push; even *importing* expo-notifications there
@@ -13,17 +12,26 @@ const IS_EXPO_GO =
 
 const EXPO_PUSH_ENDPOINT = "https://exp.host/--/api/v2/push/send";
 
+// The active person-profile "acting" on this device (set by the auth context).
+// Used as notifications.actor_id — RLS requires it to be one of the account's
+// profiles (the account uid itself is NOT a profile id anymore).
+let pushActorProfileId: string | null = null;
+export function setPushActor(profileId: string | null): void {
+  pushActorProfileId = profileId;
+}
+
 /** Push is only usable in a real dev/standalone build on a physical device. */
 export function isPushSupported(): boolean {
-  return !USE_LOCAL_BACKEND && !IS_EXPO_GO && Device.isDevice;
+  return !IS_EXPO_GO && Device.isDevice;
 }
 
 /**
- * Ask for permission, get this device's Expo push token, and save it on the
- * user's profile. No-ops on the local backend, in Expo Go, on simulators, or
+ * Ask for permission, get this device's Expo push token, and save it on EVERY
+ * profile of the account — the phone is shared (family), so a push aimed at any
+ * of its people must reach this device. No-ops in Expo Go, on simulators, or
  * without an EAS projectId — always best-effort.
  */
-export async function registerForPush(profileId: string): Promise<void> {
+export async function registerForPush(accountId: string): Promise<void> {
   try {
     if (!isPushSupported()) return;
 
@@ -62,7 +70,7 @@ export async function registerForPush(profileId: string): Promise<void> {
     if (!projectId) return; // set after `eas init` — skip until then
 
     const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
-    await supabase.from("profiles").update({ expo_push_token: token }).eq("id", profileId);
+    await supabase.from("profiles").update({ expo_push_token: token }).eq("account_id", accountId);
   } catch (e) {
     // Expo Go / no FCM / offline — best-effort. Logged so `adb logcat` can surface
     // setup issues (e.g. missing google-services.json) during testing.
@@ -70,23 +78,20 @@ export async function registerForPush(profileId: string): Promise<void> {
   }
 }
 
-/** Send a push to a user (by profile id), looking up their stored token. Best-effort. */
+/** Send a push to a person (by profile id), looking up their stored token. Best-effort. */
 export async function sendPushToProfile(
   profileId: string,
   title: string,
   body: string,
   data?: Record<string, unknown>
 ): Promise<void> {
-  if (USE_LOCAL_BACKEND) return;
-
-  // 1) Persist for the in-app notification center (history). Best-effort; the
-  //    insert is allowed by RLS only when actor_id is the current user.
+  // 1) Persist for the in-app notification center (history). Best-effort; RLS
+  //    requires actor_id to be one of the sender account's profile ids.
   try {
-    const actorId = (await supabase.auth.getSession()).data.session?.user?.id ?? null;
-    if (actorId) {
+    if (pushActorProfileId) {
       await supabase.from("notifications").insert({
         recipient_id: profileId,
-        actor_id: actorId,
+        actor_id: pushActorProfileId,
         title,
         body,
         recording_id: (data?.recordingId as string | undefined) ?? null,
@@ -101,16 +106,24 @@ export async function sendPushToProfile(
   try {
     const { data: prof } = await supabase
       .from("profiles")
-      .select("expo_push_token")
+      .select("expo_push_token, full_name")
       .eq("id", profileId)
       .maybeSingle();
     const token = prof?.expo_push_token;
     if (!token) return;
 
+    // The phone may be shared by several people — name the person the
+    // notification is for, and carry their profile id so a tap can
+    // auto-switch to them before routing.
+    const namedTitle = prof?.full_name ? `${prof.full_name} · ${title}` : title;
+    const payload = { ...data, recipientProfileId: profileId };
+
     await fetch(EXPO_PUSH_ENDPOINT, {
       method: "POST",
       headers: { Accept: "application/json", "Content-Type": "application/json" },
-      body: JSON.stringify([{ to: token, title, body, data, sound: "default", channelId: "default" }]),
+      body: JSON.stringify([
+        { to: token, title: namedTitle, body, data: payload, sound: "default", channelId: "default" },
+      ]),
     });
   } catch {
     // never block the action on a failed notification
