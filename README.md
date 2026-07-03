@@ -8,7 +8,7 @@ An Arabic, right-to-left mobile app where **students record Quran recitations** 
 > no selling, no charging for access, no paywalls, and **no advertising or monetization** of any kind.
 > Use it, fork it, improve it, and share it freely — for free. Keep it that way. 🤲
 
-> **Status:** Runs against **cloud Supabase** (supabase.com) — Postgres + Storage + Auth + RLS — so phones share one backend over the internet (no same-Wi-Fi requirement). Distributed as an **installable Android APK** (`./build-apk.sh`). A fully on-device mode and a self-hosted local Supabase are kept as fallbacks behind flags/env. Source of truth: `spec.md`; plan: `todo.md`.
+> **Status:** Runs against **cloud Supabase** (supabase.com) — Postgres + Storage + Auth + RLS — so phones share one backend over the internet (no same-Wi-Fi requirement). Distributed as an **installable Android APK** (`./build-apk.sh`). Source of truth: `spec.md`; plan: `todo.md`.
 
 ---
 
@@ -30,23 +30,35 @@ adb install -r output/quran-latest.apk
 ```
 The script re-syncs the native project (`expo prebuild`), forces a fresh JS bundle (so the current `.env` backend is embedded), prints the embedded Supabase host for verification, and copies the APK to `output/`. Works on any network since the backend is cloud `https`.
 
-> First-time signup with test emails: in the Supabase dashboard, **Authentication → Sign In/Providers → Email → turn off "Confirm email"**, otherwise the session/profile insert fails.
-
 ---
 
-## Backend modes
+## Backend
 
-The data layer, auth, and file storage switch on one flag (`src/config/backend.ts`):
+Everything lives on **cloud Supabase**: accounts via Supabase Auth (hashed, server-side); audio in private Storage buckets; access scoped by **RLS** (account-scoped: a row is reachable when its profile belongs to the caller's account, `profiles.account_id = auth.uid()`). The active project is set in `.env` (`EXPO_PUBLIC_SUPABASE_URL` + anon key); schema is managed via migrations in `supabase/migrations/`.
 
-```ts
-export const USE_LOCAL_BACKEND = false; // Supabase (default — cloud or self-hosted)
-// = true → fully on-device (AsyncStorage + local accounts), single phone only
+### Auth: sign-up wizard, email verification & password reset
+
+Email verification and password reset use **6-digit codes typed in the app** (no deep links, no browser hop — works the same in Expo Go and the APK). Requires two dashboard settings: **Confirm email ON** and the *Confirm signup* / *Reset password* email templates showing `{{ .Token }}`.
+
+```mermaid
+flowchart TD
+    SU[إنشاء حساب<br/>email + password] -->|code emailed| V[أدخل الرمز<br/>6-digit verifyOtp]
+    V --> PS[الملف الشخصي الأول<br/>name · sex · birth date · teach flag]
+    PS --> PICK[من يقرأ الآن؟<br/>profile picker]
+    SI[تسجيل الدخول] --> PICK
+    SI -.->|نسيت كلمة المرور؟| F[email → recovery code<br/>→ new password] --> PICK
+    PICK --> HOME[home by mode]
+    PICK -.->|no profiles yet| PS
 ```
 
-- **Supabase (default):** everything lives on the server; accounts via Supabase Auth (hashed, server-side); audio in private Storage buckets; access scoped by **RLS** (`auth.uid()`). The active project is set in `.env`.
-  - **Cloud** (current): `EXPO_PUBLIC_SUPABASE_URL=https://<ref>.supabase.co`. Schema is managed via migrations applied through the Supabase MCP.
-  - **Self-hosted (fallback):** a local Supabase on the dev PC; keep those values in `.env.local.bak` and swap them into `.env` to use them.
-- **On-device:** flip the flag to `true` — everything in AsyncStorage on one phone, no network (single-device only).
+### Profiles, the picker & the mode switch
+
+- **Picker on every cold start** ("من يقرأ الآن؟"): colored-initial tiles, last-used highlighted, long-press to edit, "+ إضافة فرد" (max 6). Switch anytime from حسابي → "تبديل الفرد".
+- **Profile create/edit/delete**: name, sex, birth date, tile color (8 presets), "سأُدرّس" flag. Delete is hard (cascades that person's data) behind a strong confirmation.
+- **Dual role**: a teacher profile gets an Airbnb-style **"التحوّل إلى التعلّم / التدريس"** switch in حسابي; each mode keeps its own clean tabs and stats, and the mode is remembered per profile. A profile can't join a class it teaches (UI message + RLS).
+- **Join guideline** (soft): a student **15+** joining an **opposite-sex** teacher's class gets a warning dialog and may still proceed (`ADULT_AGE` in `src/features/profiles/constraints.ts`).
+- **Multiple teachers per class**: the creator is the **owner**; other teachers join with a secret per-class **رمز المعلّمين** (kept in its own owner-readable table and validated server-side by the `join_class_as_teacher` RPC). Co-teachers get full teaching rights — review, assign wirds, mark completions — while rename/delete and roster/co-teacher administration stay with the owner. A profile can never be teacher and student in the same class. Every submitted review records **which teacher reviewed it** (`recordings.reviewed_by`), shown to both sides ("راجعه: …").
+- **Shared-phone notifications**: pushes are titled with the person they're for ("فاطمة · تمت المراجعة"); tapping one auto-switches to that profile (and the right mode) before opening the recording. The device token is registered on every profile of the account.
 
 ---
 
@@ -58,6 +70,7 @@ export const USE_LOCAL_BACKEND = false; // Supabase (default — cloud or self-h
 - **Supabase** — Postgres + Storage + Auth + RLS
 - **TanStack Query** for server state; **expo-audio** for record/playback
 - **expo-notifications** + Expo Push (FCM) for notifications; `react-native-svg` for charts/icons
+- **Purposeful motion**: the logo's SVG parts animate on the splash (equalizer bars pop center-outward), profile tiles stagger in, wird completion celebrates — all skipped when the OS requests reduced motion
 
 ---
 
@@ -78,6 +91,34 @@ flowchart TD
     SB --> DB[(Postgres + RLS)]
     SB --> ST[(Storage: recordings, corrections)]
     SB --> AUTH[(Auth: email + password)]
+```
+
+### Core data model (v2): account → person-profiles
+
+One **auth account** (email) holds up to **6 person-profiles** (Netflix-style, for families
+sharing a phone). Identity everywhere is the **profile**; teaching is a **flag**, not a role —
+any profile can study, a teacher-flagged profile can also run classes (so one person can teach
+and learn from the same account). Every RLS policy is scoped by
+`profiles.account_id = auth.uid()`.
+
+```mermaid
+erDiagram
+    AUTH_USERS ||--|{ PROFILES : "account_id (1..6)"
+    PROFILES ||--o{ CLASSES : "teacher_id = owner (is_teacher only)"
+    PROFILES ||--o{ CLASS_TEACHERS : "co-teacher (is_teacher only)"
+    PROFILES ||--o{ CLASS_MEMBERS : "student_id (any profile)"
+    CLASSES ||--o{ CLASS_MEMBERS : class_id
+    CLASSES ||--o{ CLASS_TEACHERS : class_id
+    CLASSES ||--|| CLASS_TEACHER_CODES : "secret co-teacher code"
+    PROFILES {
+        uuid id PK
+        uuid account_id FK
+        text full_name
+        text sex "male | female"
+        date birth_date
+        bool is_teacher
+        text avatar_color
+    }
 ```
 
 ### Navigation (bottom tabs, per-tab stacks)
@@ -134,21 +175,25 @@ flowchart LR
 
 ---
 
-## Wird (أوراد) — teacher-assigned tasks
+## Wird (أوراد) — the attempt loop
 
-A teacher assigns a Quran portion (whole class or a single student) with an optional title, note, and due date; the student records it (pre-filled & linked); the teacher reviews and **manually marks it complete per student**. See `spec.md` §11.
+A wird is an **iterative loop**: the teacher assigns a portion, the student records an attempt, the teacher corrects it, the student retries — until it's good and the teacher declares it complete (which feeds the stats and suggests the next portion).
 
 ```mermaid
 stateDiagram-v2
-    [*] --> New: teacher assigns
-    New --> Submitted: student records (linked)
-    Submitted --> Reviewed: teacher submits review
-    Reviewed --> Done: teacher marks complete
-    Submitted --> Done: teacher marks complete
-    Done --> [*]
+    [*] --> جديد: teacher assigns (quick-assign screen)
+    جديد --> بانتظار_التصحيح: student records attempt n
+    بانتظار_التصحيح --> صُحّحت: teacher reviews the attempt
+    صُحّحت --> بانتظار_التصحيح: student records attempt n+1
+    صُحّحت --> مكتمل: teacher taps "أتمّ الورد ✓" in the review screen
+    مكتمل --> [*]: celebration + "الورد التالي؟" suggestion
 ```
 
-Status labels in-app: `جديد → بانتظار المراجعة → تمت المراجعة → مكتمل`; overdue wirds show a `متأخر` badge. Teachers manage wirds from the class screen; students see and record them from the class screen.
+- **Student**: the dashboard leads with **"وِردُك الحالي"** cards — portion, attempt number, state, and ONE smart action: `سجّل الآن` (new) / `اعرض المحاولة` (awaiting) / `اسمع التصحيح` + `سجّل المحاولة التالية` (corrected). Recording is pre-filled and linked; retries thread onto the previous attempt.
+- **Teacher — completing**: the **"أتمّ الورد ✓"** button lives right in the review screen; completing shows a celebration and suggests **the next portion continuing where this one ended** (البقرة ١–٥ → البقرة ٦–١٠, across surah/page boundaries): [إسناد الآن] [تعديل] [لاحقًا]. The class roster keeps the ✓/⏳ overview and a manual override.
+- **Teacher — assigning**: a **one-screen quick assign** (portion is the hero, target defaults to the whole class, due optional, title/note collapsed) plus a "متابعة بعد آخر ورد" shortcut that pre-fills the continuation of the last assigned wird.
+
+Overdue wirds show a `متأخر` badge.
 
 ---
 
