@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { USE_LOCAL_BACKEND } from "../../config/backend";
 import { supabase } from "../../config/supabase";
 import { NotificationRow } from "../../types/database";
 
@@ -11,7 +10,6 @@ export const notificationKeys = {
 };
 
 async function fetchNotifications(userId: string): Promise<NotificationItem[]> {
-  if (USE_LOCAL_BACKEND) return [];
   const { data, error } = await supabase
     .from("notifications")
     .select("*, actor:profiles!notifications_actor_id_fkey(full_name)")
@@ -27,12 +25,11 @@ export function useNotifications(userId: string) {
   return useQuery({
     queryKey: notificationKeys.list(userId),
     queryFn: () => fetchNotifications(userId),
-    enabled: !USE_LOCAL_BACKEND && Boolean(userId),
+    enabled: Boolean(userId),
   });
 }
 
 async function fetchUnreadCount(userId: string): Promise<number> {
-  if (USE_LOCAL_BACKEND) return 0;
   const { count, error } = await supabase
     .from("notifications")
     .select("id", { count: "exact", head: true })
@@ -46,7 +43,7 @@ export function useUnreadCount(userId: string | undefined) {
   return useQuery({
     queryKey: notificationKeys.unread(userId ?? "none"),
     queryFn: () => fetchUnreadCount(userId as string),
-    enabled: !USE_LOCAL_BACKEND && Boolean(userId),
+    enabled: Boolean(userId),
     refetchInterval: 30000,
   });
 }
@@ -56,7 +53,6 @@ export function useMarkAllRead(userId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (): Promise<void> => {
-      if (USE_LOCAL_BACKEND) return;
       const { error } = await supabase
         .from("notifications")
         .update({ read: true })
@@ -76,7 +72,6 @@ export function useMarkRead(userId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string): Promise<void> => {
-      if (USE_LOCAL_BACKEND) return;
       const { error } = await supabase.from("notifications").update({ read: true }).eq("id", id);
       if (error) throw error;
     },

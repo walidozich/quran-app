@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { StyleSheet, TextInput, View } from "react-native";
+import { StyleProp, StyleSheet, TextInput, TextStyle, View } from "react-native";
 import { ColorScheme, fonts, radius, spacing, textStyles, useColors } from "../theme";
 import { AppText } from "./AppText";
 
@@ -12,6 +12,8 @@ type Props = {
   secureTextEntry?: boolean;
   keyboardType?: "default" | "email-address" | "numeric" | "number-pad";
   multiline?: boolean;
+  maxLength?: number;
+  inputStyle?: StyleProp<TextStyle>;
 };
 
 export function TextField({
@@ -23,6 +25,8 @@ export function TextField({
   secureTextEntry,
   keyboardType = "default",
   multiline = false,
+  maxLength,
+  inputStyle,
 }: Props) {
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -42,7 +46,8 @@ export function TextField({
         secureTextEntry={secureTextEntry}
         keyboardType={keyboardType}
         multiline={multiline}
-        style={[styles.input, multiline ? styles.multiline : null]}
+        maxLength={maxLength}
+        style={[styles.input, multiline ? styles.multiline : null, inputStyle]}
       />
     </View>
   );

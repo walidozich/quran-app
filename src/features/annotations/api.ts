@@ -1,20 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { USE_LOCAL_BACKEND } from "../../config/backend";
 import { supabase } from "../../config/supabase";
 import { t } from "../../i18n/ar";
 import { uploadAudio } from "../../lib/audio";
 import { Annotation, AnnotationReply, Tag } from "../../types/database";
 import { sendPushToProfile } from "../notifications/push";
-import {
-  localAddReply,
-  localDeleteAnnotation,
-  localFetchAnnotations,
-  localFetchReplies,
-  localFetchTeacherAnnotations,
-  localInsertAnnotation,
-  localSetResolved,
-  localUpdateAnnotation,
-} from "../local/localApi";
 
 export type AnnotationWithTags = Annotation & { tags: Tag[] };
 export type ReplyWithAuthor = AnnotationReply & { author: { full_name: string } | null };
@@ -26,7 +15,6 @@ export const annotationKeys = {
 };
 
 async function fetchAnnotations(recordingId: string): Promise<AnnotationWithTags[]> {
-  if (USE_LOCAL_BACKEND) return localFetchAnnotations(recordingId);
   const { data, error } = await supabase
     .from("annotations")
     .select("*, tags(*)")
@@ -46,7 +34,6 @@ export function useAnnotations(recordingId: string) {
 
 /** Every annotation a teacher has authored, with tags — powers the dashboard. */
 async function fetchTeacherAnnotations(teacherId: string): Promise<AnnotationWithTags[]> {
-  if (USE_LOCAL_BACKEND) return localFetchTeacherAnnotations(teacherId);
   const { data, error } = await supabase
     .from("annotations")
     .select("*, tags(*)")
@@ -92,19 +79,6 @@ export function useCreateAnnotation(recordingId: string, teacherId: string) {
       }
 
       const endMs = input.endMs != null ? Math.round(input.endMs) : null;
-      if (USE_LOCAL_BACKEND) {
-        return localInsertAnnotation({
-          recordingId,
-          teacherId,
-          timestampMs: input.timestampMs,
-          endMs,
-          commentText: input.commentText,
-          voicePath,
-          voiceDurationMs: input.voiceDurationMs,
-          tagIds: input.tagIds,
-        });
-      }
-
       const { data, error } = await supabase
         .from("annotations")
         .insert({
@@ -136,7 +110,6 @@ export function useUpdateAnnotation(recordingId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: UpdateAnnotationInput): Promise<void> => {
-      if (USE_LOCAL_BACKEND) return localUpdateAnnotation(input.id, input.commentText, input.tagIds);
       const { error } = await supabase
         .from("annotations")
         .update({ comment_text: input.commentText, updated_at: new Date().toISOString() })
@@ -152,7 +125,6 @@ export function useDeleteAnnotation(recordingId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string): Promise<void> => {
-      if (USE_LOCAL_BACKEND) return localDeleteAnnotation(id);
       const { error } = await supabase.from("annotations").delete().eq("id", id);
       if (error) throw error;
     },
@@ -161,7 +133,6 @@ export function useDeleteAnnotation(recordingId: string) {
 }
 
 async function fetchCorrectionUrl(path: string): Promise<string> {
-  if (USE_LOCAL_BACKEND) return path;
   const { data, error } = await supabase.storage.from("corrections").createSignedUrl(path, 3600);
   if (error) throw error;
   return data.signedUrl;
@@ -178,7 +149,6 @@ export function useCorrectionUrl(path: string | null | undefined) {
 
 // --- per-annotation replies + resolve --------------------------------------
 async function fetchReplies(annotationId: string): Promise<ReplyWithAuthor[]> {
-  if (USE_LOCAL_BACKEND) return localFetchReplies(annotationId);
   const { data, error } = await supabase
     .from("annotation_replies")
     .select("*, author:profiles(full_name)")
@@ -230,6 +200,8 @@ async function notifyReplyRecipient(
     const body = author?.full_name ? `${author.full_name}: ${snippet}` : t("notif.replyBody");
     sendPushToProfile(recipient, t("notif.replyTitle"), body, {
       recordingId: ann.recording_id,
+      // The reply goes to the recording's OTHER party: teacher ↔ student.
+      targetRole: recipient === ann.teacher_id ? "teacher" : "student",
     });
   } catch {
     // never block the reply on a failed notification lookup
@@ -242,7 +214,6 @@ export function useAddReply(annotationId: string, authorId: string) {
     mutationFn: async (body: string): Promise<void> => {
       const text = body.trim();
       if (!text) return;
-      if (USE_LOCAL_BACKEND) return localAddReply(annotationId, authorId, text);
       const { error } = await supabase
         .from("annotation_replies")
         .insert({ annotation_id: annotationId, author_id: authorId, body: text });
@@ -258,7 +229,6 @@ export function useSetResolved(recordingId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, resolved }: { id: string; resolved: boolean }): Promise<void> => {
-      if (USE_LOCAL_BACKEND) return localSetResolved(id, resolved);
       const { error } = await supabase.from("annotations").update({ resolved }).eq("id", id);
       if (error) throw error;
     },

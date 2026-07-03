@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { USE_LOCAL_BACKEND } from "../../config/backend";
 import { supabase } from "../../config/supabase";
 import { RecordingReference, Wird, WirdCompletion } from "../../types/database";
 
@@ -20,7 +19,6 @@ export type NewWirdInput = RecordingReference & {
 // --- queries ---------------------------------------------------------------
 
 async function fetchClassWirds(classId: string): Promise<Wird[]> {
-  if (USE_LOCAL_BACKEND) return [];
   const { data, error } = await supabase
     .from("wirds")
     .select("*")
@@ -35,12 +33,11 @@ export function useClassWirds(classId: string) {
   return useQuery({
     queryKey: wirdKeys.forClass(classId),
     queryFn: () => fetchClassWirds(classId),
-    enabled: !USE_LOCAL_BACKEND && Boolean(classId),
+    enabled: Boolean(classId),
   });
 }
 
 async function fetchMyWirds(): Promise<Wird[]> {
-  if (USE_LOCAL_BACKEND) return [];
   const { data, error } = await supabase
     .from("wirds")
     .select("*")
@@ -54,12 +51,11 @@ export function useMyWirds() {
   return useQuery({
     queryKey: ["wirds", "mine"],
     queryFn: fetchMyWirds,
-    enabled: !USE_LOCAL_BACKEND,
   });
 }
 
 async function fetchWirdCompletions(wirdIds: string[]): Promise<WirdCompletion[]> {
-  if (USE_LOCAL_BACKEND || wirdIds.length === 0) return [];
+  if (wirdIds.length === 0) return [];
   const { data, error } = await supabase.from("wird_completions").select("*").in("wird_id", wirdIds);
   if (error) throw error;
   return data ?? [];
@@ -70,7 +66,7 @@ export function useWirdCompletions(wirdIds: string[]) {
   return useQuery({
     queryKey: [...wirdKeys.completions, [...wirdIds].sort().join(",")],
     queryFn: () => fetchWirdCompletions(wirdIds),
-    enabled: !USE_LOCAL_BACKEND && wirdIds.length > 0,
+    enabled: wirdIds.length > 0,
   });
 }
 

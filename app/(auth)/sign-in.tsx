@@ -57,10 +57,15 @@ export default function SignIn() {
 
       <Button label={t("auth.signIn")} onPress={onSignIn} loading={busy} disabled={!email.trim() || !password} />
       <Button
+        label={t("auth.forgot")}
+        variant="ghost"
+        onPress={() => router.push("/(auth)/forgot-password" as never)}
+        style={{ marginTop: spacing.xs }}
+      />
+      <Button
         label={t("auth.toSignUp")}
         variant="ghost"
         onPress={() => router.push("/(auth)/sign-up")}
-        style={{ marginTop: spacing.xs }}
       />
     </Screen>
   );
