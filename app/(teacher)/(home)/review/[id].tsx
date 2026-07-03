@@ -1,6 +1,6 @@
-import { useLocalSearchParams } from "expo-router";
-import { useCallback, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, View } from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ActivityIndicator, Alert, Animated, Pressable, View } from "react-native";
 import { AppText, Button, Card, Player, Screen, ScreenHeader } from "../../../../src/components";
 import { PlayerMarker } from "../../../../src/components/Player";
 import { AnnotationCard } from "../../../../src/features/annotations/AnnotationCard";
@@ -19,9 +19,17 @@ import {
 } from "../../../../src/features/recordings/api";
 import { useSession } from "../../../../src/features/session/auth";
 import { useCreateTag, useTags } from "../../../../src/features/tags/useTags";
-import { useSetWirdComplete, useWirdCompletions } from "../../../../src/features/wirds/api";
+import { sendPushToProfile } from "../../../../src/features/notifications/push";
+import {
+  useClassWirds,
+  useCreateWird,
+  useSetWirdComplete,
+  useWirdCompletions,
+} from "../../../../src/features/wirds/api";
+import { nextWirdRef } from "../../../../src/features/wirds/format";
 import { t } from "../../../../src/i18n/ar";
 import { formatDateTime } from "../../../../src/lib/datetime";
+import { useReducedMotion } from "../../../../src/lib/useReducedMotion";
 import { spacing, useColors } from "../../../../src/theme";
 
 export default function ReviewScreen() {
@@ -48,14 +56,89 @@ export default function ReviewScreen() {
     wirdId && recording && wirdCompletions.some((c) => c.wird_id === wirdId && c.student_id === recording.student_id)
   );
   const setWirdComplete = useSetWirdComplete();
-  const toggleWirdComplete = () => {
+
+  // v2: celebration + "next wird" suggestion right where the teacher hears the
+  // good attempt (spec.md §17). The suggested portion continues the finished one.
+  const router = useRouter();
+  const reducedMotion = useReducedMotion();
+  const { data: classWirds = [] } = useClassWirds(recording?.class_id ?? "");
+  const wird = wirdId ? classWirds.find((w) => w.id === wirdId) ?? null : null;
+  const suggestion = useMemo(() => (wird ? nextWirdRef(wird) : null), [wird]);
+  const [justCompleted, setJustCompleted] = useState(false);
+  const [nextAssigned, setNextAssigned] = useState(false);
+  const createWird = useCreateWird();
+  const celebrate = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (!justCompleted) return;
+    if (reducedMotion) {
+      celebrate.setValue(1);
+      return;
+    }
+    celebrate.setValue(0);
+    Animated.spring(celebrate, { toValue: 1, friction: 4, tension: 60, useNativeDriver: true }).start();
+  }, [justCompleted, reducedMotion, celebrate]);
+
+  const markWirdComplete = () => {
     if (!wirdId || !recording) return;
+    setWirdComplete.mutate(
+      { wirdId, studentId: recording.student_id, teacherId: currentProfile.id, completed: true },
+      { onSuccess: () => setJustCompleted(true) }
+    );
+  };
+  const unmarkWirdComplete = () => {
+    if (!wirdId || !recording) return;
+    setJustCompleted(false);
     setWirdComplete.mutate({
       wirdId,
       studentId: recording.student_id,
       teacherId: currentProfile.id,
-      completed: !wirdComplete,
+      completed: false,
     });
+  };
+
+  const assignNext = () => {
+    if (!suggestion || !recording) return;
+    createWird.mutate(
+      {
+        classId: recording.class_id,
+        teacherId: currentProfile.id,
+        studentId: recording.student_id,
+        dueAt: null,
+        title: null,
+        note: null,
+        ref_type: suggestion.ref_type,
+        surah_start: suggestion.surah_start,
+        ayah_start: suggestion.ayah_start,
+        surah_end: suggestion.surah_end,
+        ayah_end: suggestion.ayah_end,
+        page_start: suggestion.page_start,
+        page_end: suggestion.page_end,
+      },
+      {
+        onSuccess: () => {
+          setNextAssigned(true);
+          sendPushToProfile(recording.student_id, t("notif.wirdTitle"), suggestion.label, {
+            targetRole: "student",
+          });
+        },
+      }
+    );
+  };
+
+  const adjustNext = () => {
+    if (!suggestion || !recording) return;
+    const p = new URLSearchParams({
+      classId: recording.class_id,
+      studentId: recording.student_id,
+      label: suggestion.label,
+      ref_type: suggestion.ref_type ?? "",
+    });
+    for (const k of ["surah_start", "ayah_start", "surah_end", "ayah_end", "page_start", "page_end"] as const) {
+      const v = suggestion[k];
+      if (v != null) p.set(k, String(v));
+    }
+    router.push(`/(teacher)/assign-wird?${p.toString()}` as never);
   };
 
   const currentMsRef = useRef(0);
@@ -154,6 +237,11 @@ export default function ReviewScreen() {
             {t("review.reviewedAt")}: {formatDateTime(recording.reviewed_at)}
           </AppText>
         ) : null}
+        {isReviewed && recording.reviewer ? (
+          <AppText variant="caption" color={colors.primary}>
+            {t("review.reviewedBy")}: {recording.reviewer.full_name}
+          </AppText>
+        ) : null}
       </View>
 
       <Card>
@@ -214,17 +302,69 @@ export default function ReviewScreen() {
           <AppText variant="subheading" color={colors.primary}>
             {t("wird.section")}
           </AppText>
-          {wirdComplete ? (
+
+          {wirdComplete && justCompleted ? (
+            <Animated.View
+              style={{
+                alignItems: "center",
+                gap: spacing.xs,
+                opacity: celebrate,
+                transform: [{ scale: celebrate.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] }) }],
+              }}
+            >
+              <AppText variant="title" color={colors.success}>
+                ✓
+              </AppText>
+              <AppText variant="subheading" color={colors.success}>
+                {t("wird.celebration")}
+              </AppText>
+            </Animated.View>
+          ) : wirdComplete ? (
             <AppText variant="caption" color={colors.success}>
               {t("wird.statusDone")} ✓
             </AppText>
           ) : null}
-          <Button
-            label={wirdComplete ? t("wird.markUndone") : t("wird.markDone")}
-            variant={wirdComplete ? "ghost" : "primary"}
-            onPress={toggleWirdComplete}
-            loading={setWirdComplete.isPending}
-          />
+
+          {!wirdComplete ? (
+            <Button
+              label={`✓ ${t("wird.completed")}`}
+              onPress={markWirdComplete}
+              loading={setWirdComplete.isPending}
+            />
+          ) : (
+            <>
+              {suggestion && !nextAssigned ? (
+                <View style={{ gap: spacing.sm, marginTop: spacing.sm }}>
+                  <AppText variant="caption" color={colors.textMuted}>
+                    {t("wird.nextSuggestion")}:
+                  </AppText>
+                  <AppText variant="heading" color={colors.primary}>
+                    {suggestion.label}
+                  </AppText>
+                  <View style={{ flexDirection: "row", gap: spacing.sm }}>
+                    <Button
+                      label={t("wird.assignNext")}
+                      onPress={assignNext}
+                      loading={createWird.isPending}
+                      style={{ flex: 1 }}
+                    />
+                    <Button label={t("wird.adjustNext")} variant="secondary" onPress={adjustNext} style={{ flex: 1 }} />
+                  </View>
+                </View>
+              ) : null}
+              {nextAssigned ? (
+                <AppText variant="subheading" color={colors.success}>
+                  {t("wird.nextAssigned")}
+                </AppText>
+              ) : null}
+              <Button
+                label={t("wird.markUndone")}
+                variant="ghost"
+                onPress={unmarkWirdComplete}
+                loading={setWirdComplete.isPending}
+              />
+            </>
+          )}
         </Card>
       ) : null}
 
@@ -260,6 +400,7 @@ export default function ReviewScreen() {
               id: recordingId,
               status: "reviewed",
               reviewedAt: new Date().toISOString(),
+              reviewedBy: currentProfile.id,
               teacherName: currentProfile.full_name,
               label: recording?.label,
             })

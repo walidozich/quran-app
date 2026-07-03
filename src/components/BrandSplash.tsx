@@ -1,12 +1,13 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useMemo, useRef } from "react";
 import { Animated, Easing, StyleSheet, View } from "react-native";
-import Logo from "../../assets/logo.svg";
 import { t } from "../i18n/ar";
 import { ColorScheme, spacing, useColors } from "../theme";
+import { AnimatedLogo } from "./AnimatedLogo";
 import { AppText } from "./AppText";
 
-const MIN_DURATION = 1200;
+// Long enough for the logo choreography (~1.3s) to land before fading out.
+const MIN_DURATION = 1900;
 
 type Props = {
   /** Once true (and the minimum brand moment has elapsed), the splash fades out. */
@@ -56,7 +57,7 @@ export function BrandSplash({ ready, onFinish }: Props) {
         style={styles.fill}
       >
         <Animated.View style={{ opacity: enter, transform: [{ translateY }], alignItems: "center" }}>
-          <Logo width={108} height={108} />
+          <AnimatedLogo size={108} delay={120} />
           <AppText variant="title" color={colors.textOnPrimary} style={styles.name}>
             {t("app.name")}
           </AppText>

@@ -9,7 +9,6 @@ import { buildThreads, Thread } from "../../../../src/features/recordings/thread
 import { useSession } from "../../../../src/features/session/auth";
 import { useClassWirds, useDeleteWird, useSetWirdComplete, useWirdCompletions } from "../../../../src/features/wirds/api";
 import { isOverdue, wirdRefLabel } from "../../../../src/features/wirds/format";
-import { WirdForm } from "../../../../src/features/wirds/WirdForm";
 import { t } from "../../../../src/i18n/ar";
 import { formatDateTime } from "../../../../src/lib/datetime";
 import { RecordingStatus, Wird } from "../../../../src/types/database";
@@ -42,9 +41,6 @@ export default function TeacherClass() {
   const { data: completions = [] } = useWirdCompletions(wirdIds);
   const deleteWird = useDeleteWird(classId);
   const setWirdComplete = useSetWirdComplete();
-  const [wirdFormVisible, setWirdFormVisible] = useState(false);
-  const [editingWird, setEditingWird] = useState<Wird | null>(null);
-  const [formKey, setFormKey] = useState(0); // remount the form fresh on each open
   const [expandedWird, setExpandedWird] = useState<string | null>(null);
 
   // Students who have submitted (a recording linked to the wird), per wird.
@@ -69,16 +65,10 @@ export default function TeacherClass() {
     return m;
   }, [completions]);
 
-  const openAssign = () => {
-    setEditingWird(null);
-    setFormKey((k) => k + 1);
-    setWirdFormVisible(true);
-  };
-  const openEdit = (w: Wird) => {
-    setEditingWird(w);
-    setFormKey((k) => k + 1);
-    setWirdFormVisible(true);
-  };
+  // v2: assigning/editing happens in the dedicated quick-assign screen.
+  const openAssign = () => router.push(`/(teacher)/assign-wird?classId=${classId}` as never);
+  const openEdit = (w: Wird) =>
+    router.push(`/(teacher)/assign-wird?classId=${classId}&wirdId=${w.id}` as never);
   const confirmDelete = (w: Wird) => {
     Alert.alert(t("wird.delete"), t("wird.deleteConfirm"), [
       { text: t("common.cancel"), style: "cancel" },
@@ -239,15 +229,6 @@ export default function TeacherClass() {
         </>
       )}
 
-      <WirdForm
-        key={formKey}
-        visible={wirdFormVisible}
-        onClose={() => setWirdFormVisible(false)}
-        classId={classId}
-        teacherId={currentProfile.id}
-        members={members}
-        editing={editingWird}
-      />
     </Screen>
   );
 }

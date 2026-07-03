@@ -23,6 +23,7 @@ import {
 } from "../../src/features/stats/aggregate";
 import { useStudentAnnotations } from "../../src/features/tags/studyByTag";
 import { useMyWirds, useWirdCompletions } from "../../src/features/wirds/api";
+import { CurrentWirds } from "../../src/features/wirds/CurrentWirds";
 import { t } from "../../src/i18n/ar";
 import { spacing, useColors } from "../../src/theme";
 
@@ -32,7 +33,10 @@ export default function StudentDashboard() {
   const { data: recordings, isLoading: recLoading, isError, refetch } = useStudentRecordings(currentProfile.id);
   const { data: classes } = useStudentClasses(currentProfile.id);
   const { data: annotations, isLoading: annLoading } = useStudentAnnotations(currentProfile.id);
-  const { data: wirds = [] } = useMyWirds();
+  const { data: allWirds = [] } = useMyWirds();
+  // RLS also returns wirds of classes a dual-role profile TEACHES — keep only
+  // the ones from classes this profile studies in.
+  const wirds = allWirds.filter((w) => (classes ?? []).some((c) => c.id === w.class_id));
   const { data: wirdCompletions = [] } = useWirdCompletions(wirds.map((w) => w.id));
   const wirdsDone = wirdCompletions.filter((c) => c.student_id === currentProfile.id).length;
   const wirdsPending = Math.max(0, wirds.length - wirdsDone);
@@ -56,6 +60,15 @@ export default function StudentDashboard() {
         <ErrorState onRetry={() => refetch()} />
       ) : (
         <>
+          {/* v2: the wird loop leads the screen — one smart action per card. */}
+          <CurrentWirds
+            wirds={wirds}
+            recordings={recs}
+            completions={wirdCompletions}
+            classNames={new Map((classes ?? []).map((c) => [c.id, c.name]))}
+            profileId={currentProfile.id}
+          />
+
           <View style={styles.tileRow}>
             <StatTile value={sc.total} label={t("dashboard.recordings")} />
             <StatTile value={sc.reviewed} label={t("dashboard.reviewed")} tone="accent" />
