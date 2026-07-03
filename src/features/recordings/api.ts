@@ -1,16 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { USE_LOCAL_BACKEND } from "../../config/backend";
 import { supabase } from "../../config/supabase";
 import { t } from "../../i18n/ar";
 import { uploadAudio } from "../../lib/audio";
 import { Recording, RecordingReference, RecordingStatus } from "../../types/database";
-import {
-  localFetchRecordingById,
-  localFetchStudentRecordings,
-  localFetchTeacherRecordings,
-  localInsertRecording,
-  localSetRecordingStatus,
-} from "../local/localApi";
+import { fetchTeachingClassIds } from "../classes/api";
 import { sendPushToProfile } from "../notifications/push";
 
 export type RecordingWithStudent = Recording & { student: { full_name: string } };
@@ -23,7 +16,6 @@ export const recordingKeys = {
 };
 
 async function fetchStudentRecordings(studentId: string): Promise<Recording[]> {
-  if (USE_LOCAL_BACKEND) return localFetchStudentRecordings(studentId);
   const { data, error } = await supabase
     .from("recordings")
     .select("*")
@@ -40,9 +32,14 @@ export function useStudentRecordings(studentId: string) {
   });
 }
 
-async function fetchRecordingById(id: string): Promise<Recording | null> {
-  if (USE_LOCAL_BACKEND) return localFetchRecordingById(id);
-  const { data, error } = await supabase.from("recordings").select("*").eq("id", id).maybeSingle();
+export type RecordingWithReviewer = Recording & { reviewer: { full_name: string } | null };
+
+async function fetchRecordingById(id: string): Promise<RecordingWithReviewer | null> {
+  const { data, error } = await supabase
+    .from("recordings")
+    .select("*, reviewer:profiles!recordings_reviewed_by_fkey(full_name)")
+    .eq("id", id)
+    .maybeSingle<RecordingWithReviewer>();
   if (error) throw error;
   return data;
 }
@@ -55,13 +52,8 @@ export function useRecording(id: string) {
 }
 
 async function fetchTeacherRecordings(teacherId: string): Promise<RecordingWithStudent[]> {
-  if (USE_LOCAL_BACKEND) return localFetchTeacherRecordings(teacherId);
-  const { data: classes, error: clsErr } = await supabase
-    .from("classes")
-    .select("id")
-    .eq("teacher_id", teacherId);
-  if (clsErr) throw clsErr;
-  const ids = (classes ?? []).map((c) => c.id);
+  // Owned AND co-taught classes (v2 P6).
+  const ids = await fetchTeachingClassIds(teacherId);
   if (ids.length === 0) return [];
 
   const { data, error } = await supabase
@@ -83,7 +75,6 @@ export function useTeacherRecordings(teacherId: string) {
 
 async function fetchSignedAudioUrl(path: string): Promise<string> {
   // Local backend stores a file:// uri directly as the path.
-  if (USE_LOCAL_BACKEND) return path;
   const { data, error } = await supabase.storage.from("recordings").createSignedUrl(path, 3600);
   if (error) throw error;
   return data.signedUrl;
@@ -106,17 +97,22 @@ export function useSetRecordingStatus() {
       id,
       status,
       reviewedAt,
+      reviewedBy,
     }: {
       id: string;
       status: RecordingStatus;
       reviewedAt?: string | null;
+      /** Who submitted the review — matters with multiple teachers per class. */
+      reviewedBy?: string;
       // Optional context for a richer notification (not persisted).
       teacherName?: string;
       label?: string;
     }): Promise<void> => {
-      if (USE_LOCAL_BACKEND) return localSetRecordingStatus(id, status, reviewedAt);
-      const patch: { status: RecordingStatus; reviewed_at?: string | null } = { status };
+      const patch: { status: RecordingStatus; reviewed_at?: string | null; reviewed_by?: string } = {
+        status,
+      };
       if (reviewedAt !== undefined) patch.reviewed_at = reviewedAt;
+      if (status === "reviewed" && reviewedBy) patch.reviewed_by = reviewedBy;
       const { error } = await supabase.from("recordings").update(patch).eq("id", id);
       if (error) throw error;
     },
@@ -124,7 +120,7 @@ export function useSetRecordingStatus() {
       qc.invalidateQueries({ queryKey: recordingKeys.detail(vars.id) });
       qc.invalidateQueries({ queryKey: ["recordings"] });
       // Notify the student when their recording is published as reviewed.
-      if (!USE_LOCAL_BACKEND && vars.status === "reviewed") {
+      if (vars.status === "reviewed") {
         const { data: rec } = await supabase
           .from("recordings")
           .select("student_id")
@@ -136,6 +132,7 @@ export function useSetRecordingStatus() {
             : t("notif.reviewedBody");
           sendPushToProfile(rec.student_id, t("notif.reviewedTitle"), body, {
             recordingId: vars.id,
+            targetRole: "student",
           });
         }
       }
@@ -161,25 +158,6 @@ export function useCreateRecording(studentId: string) {
     mutationFn: async (input: NewRecordingInput): Promise<Recording> => {
       const path = `${studentId}/${Date.now()}.m4a`;
       const storedPath = await uploadAudio(input.localUri, "recordings", path);
-
-      if (USE_LOCAL_BACKEND) {
-        return localInsertRecording({
-          classId: input.classId,
-          studentId,
-          label: input.label,
-          audioPath: storedPath,
-          durationMs: input.durationMs,
-          respondsToId: input.respondsToId ?? null,
-          wirdId: input.wirdId ?? null,
-          refType: input.ref_type ?? null,
-          surahStart: input.surah_start ?? null,
-          ayahStart: input.ayah_start ?? null,
-          surahEnd: input.surah_end ?? null,
-          ayahEnd: input.ayah_end ?? null,
-          pageStart: input.page_start ?? null,
-          pageEnd: input.page_end ?? null,
-        });
-      }
 
       const { data, error } = await supabase
         .from("recordings")
@@ -208,7 +186,7 @@ export function useCreateRecording(studentId: string) {
     onSuccess: async (data, vars) => {
       qc.invalidateQueries({ queryKey: recordingKeys.student(studentId) });
       // Notify the class teacher that a new recording arrived.
-      if (!USE_LOCAL_BACKEND && data?.class_id) {
+      if (data?.class_id) {
         const { data: cls } = await supabase
           .from("classes")
           .select("teacher_id")
@@ -220,6 +198,7 @@ export function useCreateRecording(studentId: string) {
             : t("notif.newRecordingBody");
           sendPushToProfile(cls.teacher_id, t("notif.newRecordingTitle"), body, {
             recordingId: data.id,
+            targetRole: "teacher",
           });
         }
       }

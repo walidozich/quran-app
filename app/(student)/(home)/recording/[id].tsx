@@ -25,6 +25,11 @@ export default function StudentRecordingView() {
   return (
     <Screen scroll>
       <AppText variant="title">{recording.label}</AppText>
+      {recording.status === "reviewed" && recording.reviewer ? (
+        <AppText variant="caption" color={colors.primary}>
+          {t("review.reviewedBy")}: {recording.reviewer.full_name}
+        </AppText>
+      ) : null}
 
       <RecordingReviewPanel recordingId={recordingId} initialSeekMs={at ? Number(at) : null} />
 
