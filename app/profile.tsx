@@ -3,6 +3,7 @@ import { AppText, Button, Card, Screen, ScreenHeader, TextField } from "../src/c
 import { useAuth } from "../src/features/session/auth";
 import { t } from "../src/i18n/ar";
 import { useColors } from "../src/theme";
+import { profileRole } from "../src/types/database";
 
 export default function ProfileScreen() {
   const colors = useColors();
@@ -54,7 +55,7 @@ export default function ProfileScreen() {
         />
         {profile ? (
           <AppText variant="caption" color={colors.textMuted}>
-            {t(`roles.${profile.role}`)}
+            {t(`roles.${profileRole(profile)}`)}
           </AppText>
         ) : null}
       </Card>

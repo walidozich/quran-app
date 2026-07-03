@@ -3,17 +3,30 @@
 // NOTE: these MUST be `type` aliases (not `interface`) so they are assignable
 // to Record<string, unknown> and satisfy supabase-js's GenericSchema constraint.
 
+// v2: `role` is no longer a DB column — teaching is a flag on the profile.
+// UserRole survives as a UI-mode concept (which experience a profile is using).
 export type UserRole = "teacher" | "student";
+export type Sex = "male" | "female";
 export type RecordingStatus = "pending" | "in_review" | "reviewed";
 
+/** A person under an account (Netflix-style member profile). */
 export type Profile = {
   id: string;
+  account_id: string;
   full_name: string;
-  role: UserRole;
+  sex: Sex;
+  birth_date: string; // ISO date
+  is_teacher: boolean;
+  avatar_color: string;
   whatsapp: string | null;
   expo_push_token?: string | null;
   created_at: string;
 };
+
+/** UI mode a profile lands in by default (dual-role switch arrives in v2 P4). */
+export function profileRole(p: Pick<Profile, "is_teacher">): UserRole {
+  return p.is_teacher ? "teacher" : "student";
+}
 
 export type ClassRow = {
   id: string;
@@ -28,6 +41,21 @@ export type ClassMember = {
   class_id: string;
   student_id: string;
   joined_at: string;
+};
+
+/** A co-teacher of a class (the owner is classes.teacher_id, not listed here). */
+export type ClassTeacher = {
+  id: string;
+  class_id: string;
+  teacher_id: string;
+  added_at: string;
+};
+
+/** The secret per-class co-teacher join code (owner-readable only via RLS). */
+export type ClassTeacherCode = {
+  class_id: string;
+  code: string;
+  created_at: string;
 };
 
 export type RecordingRefType = "ayah" | "page";
@@ -52,6 +80,8 @@ export type Recording = {
   responds_to_id: string | null;
   status: RecordingStatus;
   reviewed_at: string | null;
+  /** Which teacher profile submitted the review (co-teaching support). */
+  reviewed_by?: string | null;
   created_at: string;
   // Structured Quran reference captured by the ayah picker (null for custom names).
   ref_type?: RecordingRefType | null;
@@ -142,6 +172,8 @@ export type Database = {
       profiles: Table<Profile>;
       classes: Table<ClassRow>;
       class_members: Table<ClassMember>;
+      class_teachers: Table<ClassTeacher>;
+      class_teacher_codes: Table<ClassTeacherCode>;
       recordings: Table<Recording>;
       annotations: Table<Annotation>;
       annotation_replies: Table<AnnotationReply>;
@@ -152,9 +184,13 @@ export type Database = {
       wird_completions: Table<WirdCompletion>;
     };
     Views: { [_ in never]: never };
-    Functions: { [_ in never]: never };
+    Functions: {
+      join_class_as_teacher: {
+        Args: { p_code: string; p_profile: string };
+        Returns: string;
+      };
+    };
     Enums: {
-      user_role: UserRole;
       recording_status: RecordingStatus;
       recording_ref_type: RecordingRefType;
     };

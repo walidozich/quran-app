@@ -34,7 +34,7 @@ export default function NotificationsScreen() {
     if (!n.read) markRead.mutate(n.id);
     if (!n.recording_id || !profile) return;
     const path =
-      profile.role === "teacher"
+      profile.is_teacher
         ? `/(teacher)/review/${n.recording_id}`
         : `/(student)/recording/${n.recording_id}`;
     router.push(path as never);
