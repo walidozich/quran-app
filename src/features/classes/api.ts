@@ -1,17 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { USE_LOCAL_BACKEND } from "../../config/backend";
 import { supabase } from "../../config/supabase";
-import { ClassRow } from "../../types/database";
-import {
-  localCreateClass,
-  localDeleteClass,
-  localFetchClassMembers,
-  localFetchStudentClasses,
-  localFetchTeacherClasses,
-  localJoinClass,
-  localRemoveMember,
-  localRenameClass,
-} from "../local/localApi";
+import { ClassRow, Sex } from "../../types/database";
 import { genJoinCode, JoinClassError } from "./joinCode";
 
 export { JoinClassError } from "./joinCode";
@@ -34,15 +23,26 @@ export const classKeys = {
   studentClasses: (studentId: string) => ["classes", "studentList", studentId] as const,
 };
 
-async function fetchTeacherClasses(teacherId: string): Promise<ClassRow[]> {
-  if (USE_LOCAL_BACKEND) return localFetchTeacherClasses(teacherId);
-  const { data, error } = await supabase
-    .from("classes")
-    .select("*")
-    .eq("teacher_id", teacherId)
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  return data ?? [];
+/** A class in the teaching list, with whether this profile owns it. */
+export type TeachingClass = ClassRow & { is_owner: boolean };
+
+/** Every class this profile teaches: owned + joined as co-teacher. */
+async function fetchTeacherClasses(teacherId: string): Promise<TeachingClass[]> {
+  const [owned, co] = await Promise.all([
+    supabase.from("classes").select("*").eq("teacher_id", teacherId),
+    supabase
+      .from("class_teachers")
+      .select("class:classes(*)")
+      .eq("teacher_id", teacherId)
+      .returns<{ class: ClassRow }[]>(),
+  ]);
+  if (owned.error) throw owned.error;
+  if (co.error) throw co.error;
+  const list: TeachingClass[] = [
+    ...(owned.data ?? []).map((c) => ({ ...c, is_owner: true })),
+    ...(co.data ?? []).map((r) => ({ ...r.class, is_owner: false })).filter((c) => c.id),
+  ];
+  return list.sort((a, b) => b.created_at.localeCompare(a.created_at));
 }
 
 export function useTeacherClasses(teacherId: string) {
@@ -52,8 +52,13 @@ export function useTeacherClasses(teacherId: string) {
   });
 }
 
+/** Ids of every class the profile teaches (owned + co-taught) — for queue queries. */
+export async function fetchTeachingClassIds(teacherId: string): Promise<string[]> {
+  const classes = await fetchTeacherClasses(teacherId);
+  return classes.map((c) => c.id);
+}
+
 async function fetchClassMembers(classId: string): Promise<ClassMemberWithProfile[]> {
-  if (USE_LOCAL_BACKEND) return localFetchClassMembers(classId);
   const { data, error } = await supabase
     .from("class_members")
     .select("id, joined_at, student:profiles(id, full_name)")
@@ -73,7 +78,6 @@ export function useClassMembers(classId: string | undefined) {
 }
 
 async function fetchStudentClasses(studentId: string): Promise<ClassWithTeacher[]> {
-  if (USE_LOCAL_BACKEND) return localFetchStudentClasses(studentId);
   const { data, error } = await supabase
     .from("class_members")
     .select("class:classes(*, teacher:profiles(full_name))")
@@ -99,7 +103,6 @@ export function useCreateClass(teacherId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (name: string): Promise<ClassRow> => {
-      if (USE_LOCAL_BACKEND) return localCreateClass(teacherId, name);
       const { data, error } = await supabase
         .from("classes")
         .insert({ teacher_id: teacherId, name, join_code: genJoinCode() })
@@ -114,20 +117,25 @@ export function useCreateClass(teacherId: string) {
   });
 }
 
+/** A join-code lookup, including the teacher's sex for the soft join warning. */
+export type ClassPreview = ClassRow & { teacher: { full_name: string; sex: Sex } | null };
+
+/** Resolve a join code to its class + teacher (null when the code is unknown). */
+export async function lookupClassByCode(rawCode: string): Promise<ClassPreview | null> {
+  const code = rawCode.trim().toUpperCase();
+  const { data, error } = await supabase
+    .from("classes")
+    .select("*, teacher:profiles(full_name, sex)")
+    .eq("join_code", code)
+    .maybeSingle<ClassPreview>();
+  if (error) throw error;
+  return data ?? null;
+}
+
 export function useJoinClass(studentId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (rawCode: string): Promise<ClassRow> => {
-      if (USE_LOCAL_BACKEND) return localJoinClass(studentId, rawCode);
-      const code = rawCode.trim().toUpperCase();
-      const { data: cls, error: findErr } = await supabase
-        .from("classes")
-        .select("*")
-        .eq("join_code", code)
-        .maybeSingle();
-      if (findErr) throw findErr;
-      if (!cls) throw new JoinClassError("not_found");
-
+    mutationFn: async (cls: ClassRow): Promise<ClassRow> => {
       const { error: joinErr } = await supabase
         .from("class_members")
         .upsert(
@@ -147,7 +155,6 @@ export function useRenameClass(teacherId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ classId, name }: { classId: string; name: string }): Promise<void> => {
-      if (USE_LOCAL_BACKEND) return localRenameClass(classId, name);
       const { error } = await supabase.from("classes").update({ name }).eq("id", classId);
       if (error) throw error;
     },
@@ -159,7 +166,6 @@ export function useDeleteClass(teacherId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (classId: string): Promise<void> => {
-      if (USE_LOCAL_BACKEND) return localDeleteClass(classId);
       // FK cascades remove members, recordings, and annotations.
       const { error } = await supabase.from("classes").delete().eq("id", classId);
       if (error) throw error;
@@ -171,11 +177,80 @@ export function useDeleteClass(teacherId: string) {
   });
 }
 
+// ---------------------------------------------------------------------------
+// Co-teachers (v2 P6)
+// ---------------------------------------------------------------------------
+export type CoTeacher = { id: string; added_at: string; teacher: { id: string; full_name: string } };
+
+/** The secret co-teacher join code — RLS returns it to the class OWNER only. */
+export function useTeacherCode(classId: string, isOwner: boolean) {
+  return useQuery({
+    queryKey: ["classes", "teacher-code", classId],
+    queryFn: async (): Promise<string | null> => {
+      const { data, error } = await supabase
+        .from("class_teacher_codes")
+        .select("code")
+        .eq("class_id", classId)
+        .maybeSingle();
+      if (error) throw error;
+      return data?.code ?? null;
+    },
+    enabled: isOwner && Boolean(classId),
+  });
+}
+
+export function useCoTeachers(classId: string) {
+  return useQuery({
+    queryKey: ["classes", "co-teachers", classId],
+    queryFn: async (): Promise<CoTeacher[]> => {
+      const { data, error } = await supabase
+        .from("class_teachers")
+        .select("id, added_at, teacher:profiles(id, full_name)")
+        .eq("class_id", classId)
+        .order("added_at", { ascending: true })
+        .returns<CoTeacher[]>();
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: Boolean(classId),
+  });
+}
+
+/** Join a class as co-teacher with its secret code (validated server-side). */
+export function useJoinAsTeacher(profileId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (code: string): Promise<string> => {
+      const { data, error } = await supabase.rpc("join_class_as_teacher", {
+        p_code: code.trim().toUpperCase(),
+        p_profile: profileId,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: classKeys.teacher(profileId) }),
+  });
+}
+
+/** Owner removes a co-teacher, or a co-teacher leaves (same row deletion). */
+export function useRemoveCoTeacher(classId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (rowId: string): Promise<void> => {
+      const { error } = await supabase.from("class_teachers").delete().eq("id", rowId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["classes", "co-teachers", classId] });
+      qc.invalidateQueries({ queryKey: ["classes"] });
+    },
+  });
+}
+
 export function useRemoveMember(classId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (studentId: string): Promise<void> => {
-      if (USE_LOCAL_BACKEND) return localRemoveMember(classId, studentId);
       const { error } = await supabase
         .from("class_members")
         .delete()
