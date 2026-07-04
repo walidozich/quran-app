@@ -1,6 +1,7 @@
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Platform, Pressable, StyleSheet, View } from "react-native";
 import {
   AppText,
   AyahPicker,
@@ -21,8 +22,6 @@ import { formatDateTime } from "../../../src/lib/datetime";
 import { ColorScheme, radius, spacing, useColors } from "../../../src/theme";
 import { RecordingRefType, Wird } from "../../../src/types/database";
 
-const DAY = 24 * 60 * 60 * 1000;
-
 function refFromWird(w: Wird): PickedQuranReference {
   return {
     label: wirdRefLabel(w),
@@ -41,11 +40,18 @@ const n = (v: string | undefined): number | null => {
   return Number.isFinite(x) && v !== undefined && v !== "" ? x : null;
 };
 
+/** End of the picked day, so a same-day deadline stays valid until midnight. */
+function endOfDayIso(d: Date): string {
+  const e = new Date(d);
+  e.setHours(23, 59, 0, 0);
+  return e.toISOString();
+}
+
 /**
  * One-screen quick assign (spec.md §17): the portion is the hero, the target
- * defaults to the whole class, due date optional, title/note collapsed. Two
- * taps for the common case. Also edits an existing wird (`wirdId` param) and
- * accepts a pre-filled portion (deep link from the "next wird" suggestion).
+ * is a toggle list (everyone, or any subset of students), the deadline is a
+ * free calendar date. A subset creates one wird per selected student; the
+ * full class creates a single class-wide wird.
  */
 export default function AssignWird() {
   const router = useRouter();
@@ -87,10 +93,26 @@ export default function AssignWird() {
   const [ref, setRef] = useState<PickedQuranReference | null>(
     editing ? refFromWird(editing) : prefill
   );
-  const [studentId, setStudentId] = useState<string | null>(
-    editing?.student_id ?? (params.studentId as string | undefined) ?? null
-  );
+
+  // Target selection: empty set + allMode=true means the whole class.
+  const initialIds = (): Set<string> => {
+    const single = editing ? editing.student_id : (params.studentId as string | undefined);
+    return single ? new Set([single]) : new Set();
+  };
+  const [selected, setSelected] = useState<Set<string>>(initialIds);
+  const allMode = selected.size === 0 || selected.size === members.length;
+
+  const toggleStudent = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   const [dueAt, setDueAt] = useState<string | null>(editing?.due_at ?? null);
+  const [duePickerOpen, setDuePickerOpen] = useState(false);
   const [title, setTitle] = useState(editing?.title ?? "");
   const [note, setNote] = useState(editing?.note ?? "");
   const [detailsOpen, setDetailsOpen] = useState(Boolean(editing?.title || editing?.note));
@@ -101,14 +123,17 @@ export default function AssignWird() {
   const createWird = useCreateWird();
   const updateWird = useUpdateWird(classId);
 
-  // "Continue after the last wird" shortcut — pre-fills the portion that
-  // follows the most recently assigned one.
+  // "Continue after the last wird" shortcut.
   const lastWird = wirds[0] ?? null;
   const continuation = useMemo(() => (lastWird ? nextWirdRef(lastWird) : null), [lastWird]);
 
   const onSave = async () => {
     if (!ref || !ref.ref_type) {
       setError(t("wird.needPortion"));
+      return;
+    }
+    if (members.length === 0 && !allMode) {
+      setError(t("wird.needTarget"));
       return;
     }
     setBusy(true);
@@ -125,22 +150,35 @@ export default function AssignWird() {
         title: title.trim() || null,
         note: note.trim() || null,
       };
+      // Whole class → one class-wide wird; a subset → one wird per student.
+      const targets: (string | null)[] = allMode ? [null] : [...selected];
+
       if (editing) {
         await updateWird.mutateAsync({
           id: editing.id,
-          patch: { ...refFields, due_at: dueAt, student_id: studentId },
+          patch: { ...refFields, due_at: dueAt, student_id: targets[0] },
         });
+        for (const extra of targets.slice(1)) {
+          await createWird.mutateAsync({
+            classId,
+            teacherId: currentProfile.id,
+            studentId: extra,
+            dueAt,
+            ...refFields,
+          });
+        }
       } else {
-        await createWird.mutateAsync({
-          classId,
-          teacherId: currentProfile.id,
-          studentId,
-          dueAt,
-          ...refFields,
-        });
-        // Notify the targeted student(s): one student, or every class member.
-        const targets = studentId ? [studentId] : members.map((m) => m.student.id);
-        targets.forEach((id) =>
+        for (const target of targets) {
+          await createWird.mutateAsync({
+            classId,
+            teacherId: currentProfile.id,
+            studentId: target,
+            dueAt,
+            ...refFields,
+          });
+        }
+        const notifyIds = allMode ? members.map((m) => m.student.id) : [...selected];
+        notifyIds.forEach((id) =>
           sendPushToProfile(id, t("notif.wirdTitle"), ref.label, { targetRole: "student" })
         );
       }
@@ -194,36 +232,52 @@ export default function AssignWird() {
         </Pressable>
       ) : null}
 
-      {/* Target — defaults to the whole class */}
+      {/* Target — toggle any subset; الجميع resets to the whole class */}
       <AppText variant="subheading" color={colors.primary}>
         {t("wird.target")}
       </AppText>
+      <AppText variant="caption" color={colors.textMuted}>
+        {t("wird.targetHint")}
+      </AppText>
       <View style={styles.chips}>
-        <Chip label={t("wird.wholeClass")} active={studentId === null} onPress={() => setStudentId(null)} />
+        <Chip
+          label={t("wird.wholeClass")}
+          active={allMode}
+          onPress={() => setSelected(new Set())}
+        />
         {members.map((m) => (
           <Chip
             key={m.student.id}
             label={m.student.full_name}
-            active={studentId === m.student.id}
-            onPress={() => setStudentId(m.student.id)}
+            active={!allMode && selected.has(m.student.id)}
+            onPress={() => toggleStudent(m.student.id)}
           />
         ))}
       </View>
 
-      {/* Due date — optional */}
+      {/* Deadline — none, or any calendar date */}
       <AppText variant="subheading" color={colors.primary}>
         {t("wird.due")}
       </AppText>
       <View style={styles.chips}>
         <Chip label={t("wird.dueNone")} active={dueAt === null} onPress={() => setDueAt(null)} />
-        <Chip label={t("wird.due3")} active={false} onPress={() => setDueAt(new Date(Date.now() + 3 * DAY).toISOString())} />
-        <Chip label={t("wird.dueWeek")} active={false} onPress={() => setDueAt(new Date(Date.now() + 7 * DAY).toISOString())} />
-        <Chip label={t("wird.due2weeks")} active={false} onPress={() => setDueAt(new Date(Date.now() + 14 * DAY).toISOString())} />
+        <Chip
+          label={dueAt ? formatDateTime(dueAt) : t("wird.duePick")}
+          active={dueAt !== null}
+          onPress={() => setDuePickerOpen(true)}
+        />
       </View>
-      {dueAt ? (
-        <AppText variant="caption" color={colors.textMuted}>
-          {t("wird.dueLabel")}: {formatDateTime(dueAt)}
-        </AppText>
+      {duePickerOpen ? (
+        <DateTimePicker
+          value={dueAt ? new Date(dueAt) : new Date()}
+          mode="date"
+          display={Platform.OS === "android" ? "calendar" : "default"}
+          minimumDate={new Date()}
+          onChange={(event, date) => {
+            setDuePickerOpen(false);
+            if (event.type !== "dismissed" && date) setDueAt(endOfDayIso(date));
+          }}
+        />
       ) : null}
 
       {/* Collapsed extras */}
