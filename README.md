@@ -1,5 +1,26 @@
 # صاحبك — Quran Learning Platform
 
+<p align="center" dir="rtl">
+  <em>إنَّ القُرآنَ يَلْقى صاحبَه يومَ القيامةِ حين ينشَقُّ عنه قبْرُه كالرَّجُلِ الشَّاحبِ،<br/>
+  يقولُ: هل تَعْرِفُني؟ فيقولُ له: ما أعرَفُك، فيقولُ: أنا صاحِبُك</em>
+</p>
+
+<p align="center">
+  <sub>"The Qur'an will meet its companion on the Day of Resurrection, when his grave is opened, as a pale man. It asks: <em>Do you know me?</em> He says: <em>I do not know you.</em> It says: <em>I am your companion</em> (صاحِبُك)." — <a href="https://dorar.net/h/wMVx66Hk">source</a></sub>
+  <br/>
+  <b>ولهذا سمّيناه «صاحبك» — and that is why the app is named <em>Sahibok</em>, "your companion."</b>
+</p>
+
+<p align="center">
+  <img src="assets/child-reading.png" width="88%" alt="A young reciter using صاحبك" />
+</p>
+
+<p align="center">
+  <img src="assets/quran-mockup.png" width="78%" alt="صاحبك — the teacher review screen and the app splash" />
+</p>
+
+---
+
 An Arabic, right-to-left mobile app where **students record Quran recitations** and **teachers review them with timestamped annotations** — pinning a voice correction, a text comment, and tags to the exact moment of each mistake. Teachers also **assign wirds (أوراد)** — Quran portions to recite — and track each student's progress. Students consume feedback in context, filter their mistakes by tag, and respond with new attempts that form a review thread.
 
 > ## ❤️ A charity project — free forever, never for profit
