@@ -8,7 +8,15 @@ An Arabic, right-to-left mobile app where **students record Quran recitations** 
 > no selling, no charging for access, no paywalls, and **no advertising or monetization** of any kind.
 > Use it, fork it, improve it, and share it freely — for free. Keep it that way. 🤲
 
-> **Status:** Runs against **cloud Supabase** (supabase.com) — Postgres + Storage + Auth + RLS — so phones share one backend over the internet (no same-Wi-Fi requirement). Distributed as an **installable Android APK** (`./build-apk.sh`). Source of truth: `spec.md`; plan: `todo.md`.
+> **Status:** Runs against **cloud Supabase** (supabase.com) — Postgres + Storage + Auth + RLS — so phones share one backend over the internet (no same-Wi-Fi requirement). Distributed as an **installable Android APK** (`./build-apk.sh`) .
+
+---
+
+## 🎬 عرض توضيحي — Watch the demo
+
+[![صاحبك — demo video](docs/demo-poster.png)](docs/sahibok-demo.mp4)
+
+**85 seconds, the whole story:** family profiles ("من يقرأ الآن؟"), verified accounts, the teach⇄learn switch, the wird attempt loop with corrections, two-tap assigning that continues where the last wird ended, and co-teachers sharing one class. *Click the poster and GitHub opens the video player.*
 
 ---
 
