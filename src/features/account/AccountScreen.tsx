@@ -65,6 +65,17 @@ export function AccountScreen() {
         </Pressable>
       ) : null}
 
+      <Pressable onPress={() => router.push("/manage-profiles" as never)}>
+        <Card>
+          <AppText variant="subheading" color={colors.primary}>
+            {t("manageProfiles.entry")} ‹
+          </AppText>
+          <AppText variant="caption" color={colors.textMuted}>
+            {t("manageProfiles.entryHint")}
+          </AppText>
+        </Card>
+      </Pressable>
+
       <AppText variant="caption" color={colors.textMuted} style={{ marginTop: spacing.sm }}>
         {t("drawer.settings")}
       </AppText>

@@ -1,8 +1,9 @@
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { useState } from "react";
-import { Pressable, StyleSheet, Switch, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Switch, View } from "react-native";
 import { AppText, Button, Card, TextField } from "../../components";
 import { t } from "../../i18n/ar";
-import { spacing, useColors } from "../../theme";
+import { radius, spacing, useColors } from "../../theme";
 import { Profile, Sex } from "../../types/database";
 import { AVATAR_COLOR_KEYS, AVATAR_COLORS } from "./avatar";
 
@@ -22,43 +23,36 @@ type Props = {
   onSubmit: (values: ProfileFormValues) => void;
 };
 
-/** The person-profile form: name, sex, birth date, teach flag, tile color. */
+const MIN_DATE = new Date(1900, 0, 1);
+
+function toIsoDate(d: Date): string {
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+
+function formatDisplayDate(d: Date): string {
+  return d.toLocaleDateString("ar", { year: "numeric", month: "long", day: "numeric" });
+}
+
+/** The person-profile form: name, sex, birth date (calendar), teach flag, tile color. */
 export function ProfileForm({ initial, submitLabel, busy, onSubmit }: Props) {
   const colors = useColors();
-  const init = initial?.birth_date ? new Date(initial.birth_date) : null;
   const [fullName, setFullName] = useState(initial?.full_name ?? "");
   const [sex, setSex] = useState<Sex | null>(initial?.sex ?? null);
-  const [day, setDay] = useState(init ? String(init.getUTCDate()) : "");
-  const [month, setMonth] = useState(init ? String(init.getUTCMonth() + 1) : "");
-  const [year, setYear] = useState(init ? String(init.getUTCFullYear()) : "");
+  const [birthDate, setBirthDate] = useState<Date | null>(
+    initial?.birth_date ? new Date(initial.birth_date) : null
+  );
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [isTeacher, setIsTeacher] = useState(initial?.is_teacher ?? false);
   const [avatarColor, setAvatarColor] = useState(initial?.avatar_color ?? "green");
-  const [error, setError] = useState<string | null>(null);
-
-  const birthDate = (): string | null => {
-    const d = Number(day);
-    const m = Number(month);
-    const y = Number(year);
-    if (!d || !m || !y || y < 1900 || y > new Date().getFullYear()) return null;
-    const date = new Date(Date.UTC(y, m - 1, d));
-    // Reject overflowed dates like 31/02.
-    if (date.getUTCFullYear() !== y || date.getUTCMonth() !== m - 1 || date.getUTCDate() !== d) return null;
-    if (date.getTime() > Date.now()) return null;
-    return date.toISOString().slice(0, 10);
-  };
 
   const submit = () => {
-    const bd = birthDate();
-    if (!bd) {
-      setError(t("profileSetup.errorDate"));
-      return;
-    }
-    if (!sex) return;
-    setError(null);
-    onSubmit({ fullName: fullName.trim(), sex, birthDate: bd, isTeacher, avatarColor });
+    if (!sex || !birthDate) return;
+    onSubmit({ fullName: fullName.trim(), sex, birthDate: toIsoDate(birthDate), isTeacher, avatarColor });
   };
 
-  const valid = fullName.trim().length > 0 && sex !== null && day && month && year.length === 4;
+  const valid = fullName.trim().length > 0 && sex !== null && birthDate !== null;
 
   return (
     <>
@@ -82,38 +76,29 @@ export function ProfileForm({ initial, submitLabel, busy, onSubmit }: Props) {
         </View>
 
         <AppText variant="subheading">{t("profileSetup.birthDate")}</AppText>
-        <View style={{ flexDirection: "row", gap: spacing.sm }}>
-          <View style={{ flex: 1 }}>
-            <TextField
-              label={t("profileSetup.day")}
-              value={day}
-              onChangeText={(v) => setDay(v.replace(/[^0-9]/g, ""))}
-              keyboardType="number-pad"
-              maxLength={2}
-              inputStyle={{ textAlign: "center" }}
-            />
-          </View>
-          <View style={{ flex: 1 }}>
-            <TextField
-              label={t("profileSetup.month")}
-              value={month}
-              onChangeText={(v) => setMonth(v.replace(/[^0-9]/g, ""))}
-              keyboardType="number-pad"
-              maxLength={2}
-              inputStyle={{ textAlign: "center" }}
-            />
-          </View>
-          <View style={{ flex: 1.4 }}>
-            <TextField
-              label={t("profileSetup.year")}
-              value={year}
-              onChangeText={(v) => setYear(v.replace(/[^0-9]/g, ""))}
-              keyboardType="number-pad"
-              maxLength={4}
-              inputStyle={{ textAlign: "center" }}
-            />
-          </View>
-        </View>
+        <Pressable
+          onPress={() => setPickerOpen(true)}
+          style={[styles.dateField, { borderColor: colors.border, backgroundColor: colors.surface }]}
+        >
+          <AppText color={birthDate ? colors.text : colors.textMuted}>
+            {birthDate ? formatDisplayDate(birthDate) : t("profileSetup.pickDate")}
+          </AppText>
+          <AppText color={colors.primary}>🗓</AppText>
+        </Pressable>
+        {pickerOpen ? (
+          <DateTimePicker
+            value={birthDate ?? new Date(2010, 0, 1)}
+            mode="date"
+            display={Platform.OS === "android" ? "spinner" : "default"}
+            maximumDate={new Date()}
+            minimumDate={MIN_DATE}
+            onChange={(event, date) => {
+              // Android fires once then dismisses; "dismissed" means cancelled.
+              setPickerOpen(false);
+              if (event.type !== "dismissed" && date) setBirthDate(date);
+            }}
+          />
+        ) : null}
 
         <AppText variant="subheading">{t("profileSetup.color")}</AppText>
         <View style={styles.swatches}>
@@ -141,18 +126,21 @@ export function ProfileForm({ initial, submitLabel, busy, onSubmit }: Props) {
         </View>
       </Card>
 
-      {error ? (
-        <Card style={{ borderColor: colors.danger }}>
-          <AppText color={colors.danger}>{error}</AppText>
-        </Card>
-      ) : null}
-
       <Button label={submitLabel} onPress={submit} loading={busy} disabled={!valid} />
     </>
   );
 }
 
 const styles = StyleSheet.create({
+  dateField: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderWidth: 1,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    minHeight: 62,
+  },
   swatches: {
     flexDirection: "row",
     flexWrap: "wrap",
