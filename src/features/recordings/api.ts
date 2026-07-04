@@ -58,7 +58,9 @@ async function fetchTeacherRecordings(teacherId: string): Promise<RecordingWithS
 
   const { data, error } = await supabase
     .from("recordings")
-    .select("*, student:profiles(full_name)")
+    // Explicit FK hint — recordings has TWO links to profiles (student_id,
+    // reviewed_by), so an unhinted embed is ambiguous and PostgREST rejects it.
+    .select("*, student:profiles!recordings_student_id_fkey(full_name)")
     .in("class_id", ids)
     .order("created_at", { ascending: false })
     .returns<RecordingWithStudent[]>();
