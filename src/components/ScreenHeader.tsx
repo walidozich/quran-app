@@ -133,6 +133,7 @@ const makeStyles = (colors: ColorScheme) =>
     },
     titleText: {
       textAlign: "right",
+      flexShrink: 1,
     },
     iconBtn: {
       width: 40,

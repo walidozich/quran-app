@@ -50,8 +50,14 @@ export default function StudentClass() {
   const cls = classes?.find((c) => c.id === classId) ?? null;
   const threads = buildThreads((recordings ?? []).filter((r) => r.class_id === classId));
 
-  // --- wirds assigned to me in this class (RLS already scopes class-wide + own) ---
-  const { data: wirds = [] } = useClassWirds(classId);
+  // --- wirds assigned to ME in this class. RLS scopes per ACCOUNT (it cannot
+  // know which family profile is active), so the per-person filter lives here:
+  // class-wide wirds + the ones addressed to this profile, nothing else.
+  const { data: allWirds = [] } = useClassWirds(classId);
+  const wirds = useMemo(
+    () => allWirds.filter((w) => w.student_id === null || w.student_id === currentProfile.id),
+    [allWirds, currentProfile.id]
+  );
   const wirdIds = useMemo(() => wirds.map((w) => w.id), [wirds]);
   const { data: completions = [] } = useWirdCompletions(wirdIds);
   const myCompleted = useMemo(
@@ -76,8 +82,10 @@ export default function StudentClass() {
             const overdue = isOverdue(w.due_at) && status !== "done";
             return (
               <Card key={w.id}>
-                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                  <AppText variant="heading">{wirdRefLabel(w)}</AppText>
+                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+                  <AppText variant="heading" style={{ flexShrink: 1 }}>
+                    {wirdRefLabel(w)}
+                  </AppText>
                   <Badge label={badge.label} status={badge.status} />
                 </View>
                 {w.note ? <AppText variant="body">{w.note}</AppText> : null}
@@ -112,8 +120,10 @@ export default function StudentClass() {
           return (
             <Pressable key={thread.rootId} onPress={() => router.push(`/(student)/thread/${thread.rootId}`)}>
               <Card>
-                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                  <AppText variant="heading">{thread.label}</AppText>
+                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+                  <AppText variant="heading" style={{ flexShrink: 1 }}>
+                    {thread.label}
+                  </AppText>
                   <Badge label={badge.label} status={badge.status} />
                 </View>
                 <AppText variant="caption" color={colors.textMuted}>

@@ -117,7 +117,7 @@ function ClassCard({ cls }: { cls: TeachingClass }) {
 
   return (
     <Card>
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
         {editing ? (
           <View style={{ flexDirection: "row", gap: spacing.sm, alignItems: "flex-end", flex: 1 }}>
             <View style={{ flex: 1 }}>
@@ -126,7 +126,9 @@ function ClassCard({ cls }: { cls: TeachingClass }) {
             <Button label={t("manage.saveName")} onPress={saveName} loading={rename.isPending} />
           </View>
         ) : (
-          <AppText variant="heading">{cls.name}</AppText>
+          <AppText variant="heading" style={{ flexShrink: 1 }}>
+            {cls.name}
+          </AppText>
         )}
         <Badge
           label={cls.is_owner ? t("classes.owner") : t("classes.coTeacherBadge")}

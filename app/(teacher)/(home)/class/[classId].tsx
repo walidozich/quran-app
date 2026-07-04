@@ -117,7 +117,9 @@ export default function TeacherClass() {
             return (
               <Card key={w.id}>
                 <View style={styles.cardRow}>
-                  <AppText variant="subheading">{wirdRefLabel(w)}</AppText>
+                  <AppText variant="subheading" style={{ flexShrink: 1 }}>
+                    {wirdRefLabel(w)}
+                  </AppText>
                   {isOverdue(w.due_at) ? <Badge label={t("wird.overdue")} status="pending" /> : null}
                 </View>
                 {w.note ? <AppText variant="body">{w.note}</AppText> : null}
@@ -214,7 +216,9 @@ export default function TeacherClass() {
                   >
                     <Card>
                       <View style={styles.cardRow}>
-                        <AppText variant="heading">{thread.label}</AppText>
+                        <AppText variant="heading" style={{ flexShrink: 1 }}>
+                          {thread.label}
+                        </AppText>
                         <Badge label={badge.label} status={badge.status} />
                       </View>
                       <AppText variant="caption" color={colors.textMuted}>
@@ -270,6 +274,7 @@ const makeStyles = (colors: ColorScheme) =>
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    gap: 8,
   },
   studentRow: {
     flexDirection: "row",

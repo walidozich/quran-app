@@ -27,8 +27,11 @@ export default function TeacherHome() {
         classes!.map((cls) => (
           <Pressable key={cls.id} onPress={() => router.push(`/(teacher)/class/${cls.id}`)}>
             <Card>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                <AppText variant="heading">{cls.name}</AppText>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+                {/* flexShrink so long names wrap instead of clipping off-screen */}
+                <AppText variant="heading" style={{ flexShrink: 1 }}>
+                  {cls.name}
+                </AppText>
                 <AppText variant="heading" color={colors.primary}>
                   ‹
                 </AppText>

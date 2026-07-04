@@ -30,6 +30,8 @@ export function CurrentWirds({ wirds, recordings, completions, classNames, profi
   const active = useMemo(() => {
     const mine = new Set(completions.filter((c) => c.student_id === profileId).map((c) => c.wird_id));
     return wirds
+      // Defense in depth: only class-wide wirds or the ones addressed to me.
+      .filter((w) => w.student_id === null || w.student_id === profileId)
       .map((w) => ({ w, status: wirdStatusFor(w.id, recordings, mine.has(w.id)) }))
       .filter((x) => x.status !== "done")
       .sort((a, b) => {
@@ -85,8 +87,8 @@ function WirdCard({
 
   return (
     <Card style={status === "reviewed" ? { borderColor: colors.accent } : undefined}>
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-        <AppText variant="heading" color={colors.primary}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+        <AppText variant="heading" color={colors.primary} style={{ flexShrink: 1 }}>
           {wirdRefLabel(wird)}
         </AppText>
         {overdue ? <Badge label={t("wird.overdue")} status="pending" /> : null}

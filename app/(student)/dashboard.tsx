@@ -34,9 +34,14 @@ export default function StudentDashboard() {
   const { data: classes } = useStudentClasses(currentProfile.id);
   const { data: annotations, isLoading: annLoading } = useStudentAnnotations(currentProfile.id);
   const { data: allWirds = [] } = useMyWirds();
-  // RLS also returns wirds of classes a dual-role profile TEACHES — keep only
-  // the ones from classes this profile studies in.
-  const wirds = allWirds.filter((w) => (classes ?? []).some((c) => c.id === w.class_id));
+  // RLS scopes per ACCOUNT: it also returns wirds of classes a dual-role
+  // profile teaches AND wirds addressed to a sibling profile on a family
+  // account. Keep only: my study classes + (class-wide or addressed to ME).
+  const wirds = allWirds.filter(
+    (w) =>
+      (classes ?? []).some((c) => c.id === w.class_id) &&
+      (w.student_id === null || w.student_id === currentProfile.id)
+  );
   const { data: wirdCompletions = [] } = useWirdCompletions(wirds.map((w) => w.id));
   const wirdsDone = wirdCompletions.filter((c) => c.student_id === currentProfile.id).length;
   const wirdsPending = Math.max(0, wirds.length - wirdsDone);

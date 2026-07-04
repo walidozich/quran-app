@@ -33,8 +33,11 @@ export default function StudentHome() {
         classes!.map((cls) => (
           <Pressable key={cls.id} onPress={() => router.push(`/(student)/class/${cls.id}`)}>
             <Card>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                <AppText variant="heading">{cls.name}</AppText>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+                {/* flexShrink so long names wrap instead of clipping off-screen */}
+                <AppText variant="heading" style={{ flexShrink: 1 }}>
+                  {cls.name}
+                </AppText>
                 <AppText variant="heading" color={colors.primary}>
                   ‹
                 </AppText>
