@@ -1,4 +1,4 @@
-# صاحبك — Quran Learning Platform
+# صاحبك - Quran Learning Platform
 
 <p align="center" dir="rtl">
   <em>إنَّ القُرآنَ يَلْقى صاحبَه يومَ القيامةِ حين ينشَقُّ عنه قبْرُه كالرَّجُلِ الشَّاحبِ،<br/>
@@ -6,14 +6,11 @@
 </p>
 
 <p align="center">
-  <sub>"The Qur'an will meet its companion on the Day of Resurrection, when his grave is opened, as a pale man. It asks: <em>Do you know me?</em> He says: <em>I do not know you.</em> It says: <em>I am your companion</em> (صاحِبُك)." — <a href="https://dorar.net/h/wMVx66Hk">source</a></sub>
+  <sub>"The Qur'an will meet its companion on the Day of Resurrection, when his grave is opened, as a pale man. It asks: <em>Do you know me?</em> He says: <em>I do not know you.</em> It says: <em>I am your companion</em> (صاحِبُك)."
   <br/>
-  <b>ولهذا سمّيناه «صاحبك» — and that is why the app is named <em>Sahibok</em>, "your companion."</b>
+  <b> and that is why the app is named <em>Sahibok</em>, "your companion."</b>
 </p>
 
-<p align="center">
-  <img src="assets/child-reading.png" width="88%" alt="A young reciter using صاحبك" />
-</p>
 
 <p align="center">
   <img src="assets/quran-mockup.png" width="78%" alt="صاحبك — the teacher review screen and the app splash" />
