@@ -78,6 +78,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  /**
+   * A cached session can outlive its account (e.g. the user was deleted
+   * server-side): the JWT still verifies, profiles come back empty, and the
+   * app would wrongly resume the first-profile wizard. When a session has no
+   * profiles, ask the auth server whether the user still exists — if it
+   * answers "no", drop the dead session so the gate lands on sign-in.
+   * Network failures keep the session (could be a genuine offline mid-wizard).
+   */
+  const dropSessionIfDead = async (list: Profile[]): Promise<void> => {
+    if (list.length > 0) return;
+    const { error } = await supabase.auth.getUser();
+    if (error && (error.status === 401 || error.status === 403)) {
+      await supabase.auth.signOut({ scope: "local" }).catch(() => {});
+      setSession(null);
+      setEmail(null);
+      setProfiles([]);
+      setActiveId(null);
+    }
+  };
+
   useEffect(() => {
     let mounted = true;
     // Safety net: never stay stuck on the loading screen, even if the backend
@@ -93,7 +113,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(data.session);
         setEmail(data.session?.user?.email ?? null);
         if (data.session) {
-          await loadProfiles(data.session.user.id);
+          const list = await loadProfiles(data.session.user.id);
+          await dropSessionIfDead(list);
           registerForPush(data.session.user.id);
         }
       })
@@ -115,9 +136,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setActiveId(null);
         return;
       }
-      setTimeout(() => {
+      setTimeout(async () => {
         if (!mounted) return;
-        loadProfiles(s.user.id);
+        const list = await loadProfiles(s.user.id);
+        await dropSessionIfDead(list);
         registerForPush(s.user.id);
       }, 0);
     });
