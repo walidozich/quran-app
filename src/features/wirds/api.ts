@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../config/supabase";
+import { t } from "../../i18n/ar";
 import { RecordingReference, Wird, WirdCompletion } from "../../types/database";
+import { sendPushToProfile } from "../notifications/push";
 
 export const wirdKeys = {
   forClass: (classId: string) => ["wirds", classId] as const,
@@ -128,7 +130,13 @@ export function useDeleteWird(classId: string) {
   });
 }
 
-/** Teacher toggles a student's wird complete (insert) / incomplete (delete). */
+/**
+ * Teacher toggles a student's wird complete (insert) / incomplete (delete).
+ * Completing also SETTLES the student's outstanding attempts: a wird marked
+ * done means the recitation was accepted, so any linked recording still
+ * pending/in review flips to "reviewed" (stamped with the completing teacher).
+ * Un-completing never un-reviews.
+ */
 export function useSetWirdComplete() {
   const qc = useQueryClient();
   return useMutation({
@@ -149,6 +157,31 @@ export function useSetWirdComplete() {
           { onConflict: "wird_id,student_id" }
         );
         if (error) throw error;
+
+        const { data: pending } = await supabase
+          .from("recordings")
+          .select("id")
+          .eq("wird_id", input.wirdId)
+          .eq("student_id", input.studentId)
+          .neq("status", "reviewed");
+        if (pending && pending.length > 0) {
+          const { error: upErr } = await supabase
+            .from("recordings")
+            .update({
+              status: "reviewed",
+              reviewed_at: new Date().toISOString(),
+              reviewed_by: input.teacherId,
+            })
+            .in(
+              "id",
+              pending.map((p) => p.id)
+            );
+          if (upErr) throw upErr;
+          sendPushToProfile(input.studentId, t("notif.reviewedTitle"), t("notif.reviewedBody"), {
+            recordingId: pending[0].id,
+            targetRole: "student",
+          });
+        }
       } else {
         const { error } = await supabase
           .from("wird_completions")
@@ -158,6 +191,10 @@ export function useSetWirdComplete() {
         if (error) throw error;
       }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: wirdKeys.completions }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: wirdKeys.completions });
+      // Linked recordings may have just been marked reviewed.
+      qc.invalidateQueries({ queryKey: ["recordings"] });
+    },
   });
 }
