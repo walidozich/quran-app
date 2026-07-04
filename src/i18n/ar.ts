@@ -94,6 +94,9 @@ export const ar = {
     continueLast: "متابعة بعد آخر ورد",
     moreDetails: "تفاصيل إضافية",
     assignCta: "إسناد الورد",
+    targetHint: "اختر الجميع أو حدّد طلابًا بعينهم",
+    needTarget: "اختر طالبًا واحدًا على الأقل",
+    duePick: "اختر تاريخ الموعد",
   },
   auth: {
     signInTitle: "تسجيل الدخول",
@@ -114,7 +117,7 @@ export const ar = {
     forgot: "نسيت كلمة المرور؟",
     // email verification (6-digit code)
     verifyTitle: "تفعيل البريد الإلكتروني",
-    codeSentTo: "أرسلنا رمز تحقق من 6 أرقام إلى",
+    codeSentTo: "أدخل الرمز المُرسَل إلى",
     codeLabel: "رمز التحقق",
     verify: "تفعيل",
     resend: "إعادة إرسال الرمز",
@@ -148,6 +151,7 @@ export const ar = {
     errorDate: "تاريخ الميلاد غير صالح",
     errorCreate: "تعذّر إنشاء الملف الشخصي — حاول مجددًا",
     color: "لون الملف",
+    pickDate: "اختر التاريخ",
   },
   picker: {
     title: "من يقرأ الآن؟",
@@ -165,9 +169,16 @@ export const ar = {
     deleteConfirmTitle: "حذف الملف نهائيًا؟",
     deleteConfirmBody:
       "سيُحذف هذا الفرد وكل ما يخصّه نهائيًا: التسجيلات، المراجعات، الصفوف والأوراد. لا يمكن التراجع.",
-    deleteConfirm: "نعم، احذف نهائيًا",
+    deleteTypeHint: "للتأكيد، اكتب اسم الملف كما هو:",
+    deleteConfirm: "احذف نهائيًا",
     errorSave: "تعذّر الحفظ — حاول مجددًا",
     errorDelete: "تعذّر الحذف — حاول مجددًا",
+  },
+  manageProfiles: {
+    title: "إدارة الأفراد",
+    entry: "إدارة الأفراد",
+    entryHint: "إضافة الأفراد وتعديل ملفاتهم وحذفها",
+    edit: "تعديل",
   },
   mode: {
     toLearning: "التحوّل إلى التعلّم",

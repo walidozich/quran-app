@@ -78,6 +78,11 @@ export function RecordingReviewPanel({ recordingId, initialSeekMs = null }: Prop
               {t("review.reviewedAt")}: {formatDateTime(recording.reviewed_at)}
             </AppText>
           ) : null}
+          {isReviewed && recording.reviewer ? (
+            <AppText variant="subheading" color={colors.primary}>
+              {t("review.reviewedBy")}: {recording.reviewer.full_name}
+            </AppText>
+          ) : null}
         </View>
       </Card>
 
