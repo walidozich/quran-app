@@ -14,9 +14,11 @@ An Arabic, right-to-left mobile app where **students record Quran recitations** 
 
 ## 🎬 عرض توضيحي — Watch the demo
 
-[![صاحبك — demo video](docs/demo-poster.png)](docs/sahibok-demo.mp4)
+<video src="https://github.com/walidozich/quran-app/raw/master/docs/sahibok-demo.mp4" poster="https://github.com/walidozich/quran-app/raw/master/docs/demo-poster.png" controls muted width="720"></video>
 
-**85 seconds, the whole story:** family profiles ("من يقرأ الآن؟"), verified accounts, the teach⇄learn switch, the wird attempt loop with corrections, two-tap assigning that continues where the last wird ended, and co-teachers sharing one class. *Click the poster and GitHub opens the video player.*
+[![صاحبك — demo video](docs/demo-poster.png)](https://github.com/walidozich/quran-app/raw/master/docs/sahibok-demo.mp4)
+
+**85 seconds, the whole story:** family profiles ("من يقرأ الآن؟"), verified accounts, the teach⇄learn switch, the wird attempt loop with corrections, two-tap assigning that continues where the last wird ended, and co-teachers sharing one class. The player above embeds inline on GitHub; if it doesn't render, click the poster to watch.
 
 ---
 
