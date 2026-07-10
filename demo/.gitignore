@@ -22,7 +22,6 @@ yarn-error.*
 google-services.json
 *service-account*.json
 *fcm*.json
-commands.txt
 
 # Native build artifacts
 android/
@@ -34,10 +33,6 @@ output/
 # OS
 .DS_Store
 
-# Promo / demo video (Remotion), not part of the app
-/demo/node_modules/
-/demo/out/
+# Promo / demo video (Remotion) — not part of the app
+/demo/
 /demo-assets/
-
-# Landing page website (its own repo, deployed to Netlify)
-/website/
